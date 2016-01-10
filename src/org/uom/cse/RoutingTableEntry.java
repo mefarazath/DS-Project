@@ -1,4 +1,4 @@
-package lk.uom.cse;
+package org.uom.cse;
 
 public class RoutingTableEntry {
 

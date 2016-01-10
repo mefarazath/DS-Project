@@ -1,4 +1,4 @@
-package lk.uom.cse.udp;
+package org.uom.cse.udp;
 
 import java.net.*;
 
