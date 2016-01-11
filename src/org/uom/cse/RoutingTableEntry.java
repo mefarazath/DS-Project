@@ -4,9 +4,9 @@ public class RoutingTableEntry {
 
     private String userName;
     private String ipAddress;
-    private int port;
+    private String port;
 
-    public RoutingTableEntry(String userName, String ipAddress, int port) {
+    public RoutingTableEntry(String userName, String ipAddress, String port) {
         this.userName = userName;
         this.ipAddress = ipAddress;
         this.port = port;
@@ -20,7 +20,7 @@ public class RoutingTableEntry {
         return ipAddress;
     }
 
-    public int getPort() {
+    public String getPort() {
         return port;
     }
 

@@ -37,7 +37,7 @@ public class UDPClient {
             // send data
             DatagramPacket sendPacket = new DatagramPacket(messageToSend, messageLength, ipAddress, port);
             clientSocket.send(sendPacket);
-            System.out.println(message+"\t--> "+ipAddress+":"+port);
+            System.out.println(message+"\t --> "+ipAddress+":"+port);
 
         }catch (Exception e){
             e.printStackTrace();
@@ -71,7 +71,7 @@ public class UDPClient {
 
             // output the received bytes as a string
             outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
-            System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
+       //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
 
         }catch (Exception e){
             e.printStackTrace();

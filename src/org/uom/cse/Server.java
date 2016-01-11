@@ -1,22 +1,36 @@
 package org.uom.cse;
 
+import org.uom.cse.udp.UDPClient;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Server extends Thread{
 
     private List<RoutingTableEntry> routingTable;
+    private UDPClient udpClient;
+    private InetAddress ipAddress;
     private int port;
 
-    public Server(int port) {
+    public Server(InetAddress ipAddress, int port) {
+        this.ipAddress = ipAddress;
         this.port = port;
         this.routingTable = new ArrayList<>();
+        this.udpClient = new UDPClient(ipAddress,port);
     }
 
     @Override
     public void run() {
 
-        //  recieve data
+        System.out.println("SERVER listening at "+ipAddress.getHostAddress()+":"+port);
+        // recieve data
+
+        while (true) {
+
+            String message = udpClient.recieveMessage();
+            System.out.println("Recieved : "+message);
+
+        }
 
         // call the handleMessage() from here
         // handle according to the method --> ie. send appropriate responses.
