@@ -1,7 +1,8 @@
 package org.uom.cse;
 
+import org.uom.cse.communication.CommunicationClient;
 import org.uom.cse.message.MessageBuilder;
-import org.uom.cse.udp.UDPClient;
+import org.uom.cse.communication.UDPClient;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -13,23 +14,16 @@ import java.util.Scanner;
 
 public class Node{
 
-
     private static String bootstrapServerIp = "127.0.0.1";
     private static int bootStrapServerPort = 9999;
 
-
     private static final String LOCALHOST = "localhost";
-
-    // commands
-    private static final String REGOK = "REGOK";
-    private static final String REG = "REG";
-
 
     List<RoutingTableEntry> routingTable;
     List<String> files;
 
     private Server server;
-    private UDPClient udpClient;
+    private CommunicationClient udpClient;
 
     // IP address and port of the node
     private InetAddress ipAddress;
@@ -80,7 +74,7 @@ public class Node{
 
     private String createRegMessage(String ipAddress, int port, String userName) {
 
-       String regMessage = new MessageBuilder().append(REG)
+       String regMessage = new MessageBuilder().append(Commands.REG)
                 .append(ipAddress)
                 .append(port+"")
                 .append(userName)
@@ -96,10 +90,9 @@ public class Node{
         if(msgParts.length==2){
             System.out.println("Error Message:" + msgParts[1]);
         }else {
-            if(REGOK.equals(msgParts[1])){
+            if(Commands.REGOK.equals(msgParts[1])){
 
                 int noOfNodes = Integer.parseInt(msgParts[2]);
-
                 String ip, port, username;
 
                 if(noOfNodes == 9999){
@@ -148,7 +141,9 @@ public class Node{
                 int port = Integer.parseInt(entry.getPort());
 
                 // send JOIN via UDP
-                udpClient.sendMessage(joinMessage,ipAddress,port);
+                ((UDPClient)udpClient).setDestinationAddress(ipAddress);
+                ((UDPClient)udpClient).setDestinationPort(port);
+                udpClient.send(joinMessage);
 
             } catch (UnknownHostException e) {
                 System.err.println("Error sending JOIN message to "+entry.getIpAddress()+":"+entry.getPort());
@@ -177,21 +172,30 @@ public class Node{
             System.out.print("Enter the port number to start the node on : ");
             input = scanner.nextLine();
 
-            InetAddress ipAddress = InetAddress.getLocalHost();
+            try {
+                InetAddress ipAddress = InetAddress.getLocalHost();
+                // TODO check whether the port number is legal
+                int nodePortNumber = Integer.parseInt(input.trim());
 
-            // TODO check whether the port number is legal
-            int nodePortNumber = Integer.parseInt(input.trim());
+                // create a node
+                node = new Node(ipAddress, nodePortNumber);
 
-            // create a node
-            node = new Node(ipAddress, nodePortNumber);
+                // register with the bootstrap server
+                isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber);
 
-            // register with the bootstrap server
-            isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(),nodePortNumber);
+                if (isInitialized) {
+                    System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
+                    // start the internal server of the node to listen to messages
+                    node.server.start();
+                }
 
-            if (isInitialized) {
-                System.out.println("Node "+ipAddress.getHostAddress()+":"+nodePortNumber+" registered successfully");
-                // start the internal server of the node to listen to messages
-                node.server.start();
+            } catch (Exception ex){
+                System.err.println("Unable to initialize the node");
+                if (isInitialized) {
+                    // need to deregister from the BS
+                }
+
+                isInitialized = false;
             }
 
         }

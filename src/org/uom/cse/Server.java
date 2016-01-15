@@ -1,6 +1,6 @@
 package org.uom.cse;
 
-import org.uom.cse.udp.UDPClient;
+import org.uom.cse.communication.UDPClient;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +23,11 @@ public class Server extends Thread{
     public void run() {
 
         System.out.println("SERVER listening at "+ipAddress.getHostAddress()+":"+port);
-        // recieve data
+        // receive data
 
         while (true) {
 
-            String message = udpClient.recieveMessage();
+            String message = udpClient.receive();
             System.out.println("Recieved : "+message);
 
         }

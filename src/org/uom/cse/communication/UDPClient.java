@@ -1,15 +1,17 @@
-package org.uom.cse.udp;
+package org.uom.cse.communication;
 
 import java.net.*;
 
-public class UDPClient {
-
+public class UDPClient implements CommunicationClient{
     private static final int size = 65553;
-    private static final String ERROR = "ERROR";
 
-
+    // own ip-address and port
     private InetAddress ipAddress;
     private int port = 0;
+
+    // destination attributes
+    private InetAddress destinationAddress;
+    private int destinationPort;
 
     public UDPClient() {
     }
@@ -20,13 +22,21 @@ public class UDPClient {
         this.port = port;
     }
 
+    public void setDestinationAddress(InetAddress destinationAddress) {
+        this.destinationAddress = destinationAddress;
+    }
+
+    public void setDestinationPort(int destinationPort) {
+        this.destinationPort = destinationPort;
+    }
+
     /**
      * Method to send a message to another node via UDP
      * @param message   String : message to be sent
      * @param ipAddress
      * @param port
      */
-    public static void sendMessage(String message, InetAddress ipAddress, int port){
+    private void sendMessage(String message, InetAddress ipAddress, int port){
 
         DatagramSocket clientSocket = null;
         try {
@@ -48,12 +58,8 @@ public class UDPClient {
         }
     }
 
-
-    /**
-     * Method to receive messages via UDP from another node or client
-     */
-    public String recieveMessage(){
-
+    @Override
+    public String receive() {
         DatagramSocket clientSocket = null;
         String outputMessage = ERROR;
         try {
@@ -71,7 +77,7 @@ public class UDPClient {
 
             // output the received bytes as a string
             outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
-       //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
+            //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
 
         }catch (Exception e){
             e.printStackTrace();
@@ -84,10 +90,9 @@ public class UDPClient {
         }
     }
 
-
-    public static void main(String[] args) throws UnknownHostException {
-
+    @Override
+    public void send(String message) {
+        // send the message here
+        sendMessage(message, destinationAddress, destinationPort);
     }
-
-
 }
