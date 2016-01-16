@@ -1,206 +1,286 @@
 package org.uom.cse;
 
-import org.uom.cse.message.MessageBuilder;
-import org.uom.cse.udp.UDPClient;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
 
-public class Node{
+import org.uom.cse.message.MessageBuilder;
+import org.uom.cse.udp.UDPClient;
+
+public class Node {
+
+	private static String bootstrapServerIp;
+	private static int bootstrapServerPort;
+
+	private static final String LOCALHOST = "localhost";
+
+	private static final int JOINING_NODES_COUNT = 2;
+
+	// commands
+	private static final String REGOK = "REGOK";
+	private static final String REG = "REG";
+
+	private static final String SERVER_IP = "bootstrapServerIp";
+	private static final String SERVER_PORT = "bootstrapServerPort";
+	private static final String PROPERTIES_FILE = "config.properties";
+
+	List<RoutingTableEntry> routingTable;
+	List<String> files;
+
+	private Server server;
+	private UDPClient udpClient;
+
+	// IP address and port of the node
+	private InetAddress ipAddress;
+	private int port;
+	private Properties properties;
+
+	private Node() {
+		routingTable = new ArrayList<>();
+		files = new ArrayList<>();
+		udpClient = new UDPClient();
+		properties = loadProperties();
+
+	}
 
 
-    private static String bootstrapServerIp = "127.0.0.1";
-    private static int bootStrapServerPort = 9999;
+	public Node(InetAddress ipAddress, int port) {
+		this();
+		this.ipAddress = ipAddress;
+		this.port = port;
+		this.server = new Server(ipAddress, port);
+		properties = loadProperties();
+	}
+	
+	private Properties loadProperties() {
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileInputStream(PROPERTIES_FILE));
+			
+			bootstrapServerIp = properties.getProperty(SERVER_IP);
+			bootstrapServerPort = Integer.parseInt(properties
+					.getProperty(SERVER_PORT));
+			
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return properties;
+	}
 
+	public boolean registerToBootstrapServer(String ipAddress, int port)
+			throws IOException {
+		// send REG message to the bootstrap server
+		System.out.print("Enter username : ");
+		String userName = new Scanner(System.in).nextLine();
 
-    private static final String LOCALHOST = "localhost";
+		// build REG message
+		String msg = createRegMessage(ipAddress, port, userName);
+		System.out.println(msg);
 
-    // commands
-    private static final String REGOK = "REGOK";
-    private static final String REG = "REG";
+		// TCP send and receive
+		Socket clientSocket = new Socket(bootstrapServerIp, bootstrapServerPort);
 
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+				clientSocket.getOutputStream()));
+		writer.write(msg);
+		writer.flush();
 
-    List<RoutingTableEntry> routingTable;
-    List<String> files;
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				clientSocket.getInputStream()));
+		String serverResponse = reader.readLine();
+		System.out.println(serverResponse);
 
-    private Server server;
-    private UDPClient udpClient;
+		reader.close();
+		writer.close();
+		clientSocket.close();
 
-    // IP address and port of the node
-    private InetAddress ipAddress;
-    private int port;
+		// handle the Registration response
+		boolean success = handleRegistrationMessage(serverResponse);
+		return success;
+	}
 
-    private Node(){
-        routingTable = new ArrayList<>();
-        files = new ArrayList<>();
-        udpClient = new UDPClient();
-    }
+	private String createRegMessage(String ipAddress, int port, String userName) {
 
-    public Node(InetAddress ipAddress, int port){
-        this();
-        this.ipAddress = ipAddress;
-        this.port = port;
-        this.server = new Server(ipAddress,port);
-    }
+		String regMessage = new MessageBuilder().append(REG).append(ipAddress)
+				.append(port + "").append(userName).buildMessage();
 
+		return regMessage;
+	}
 
-    public boolean registerToBootstrapServer(String ipAddress, int port) throws IOException {
-        // send REG message to the bootstrap server
-        System.out.print("Enter username : ");
-        String userName = new Scanner(System.in).nextLine();
+	private boolean handleRegistrationMessage(String msg) {
+		boolean result = false;
+		String msgParts[] = msg.split("\\s+");
 
-        // build REG message
-        String msg = createRegMessage(ipAddress,port,userName);
-        System.out.println(msg);
+		if (msgParts.length == 2) {
+			System.out.println("Error Message:" + msgParts[1]);
+		} else {
+			if (REGOK.equals(msgParts[1])) {
 
-        // TCP send and receive
-        Socket clientSocket = new Socket(bootstrapServerIp, bootStrapServerPort);
+				int noOfNodes = Integer.parseInt(msgParts[2]);
 
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-        writer.write(msg);
-        writer.flush();
+				String ip, port, username;
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        String serverResponse = reader.readLine();
-        System.out.println(serverResponse);
+				if (noOfNodes == 9999) {
+					System.out
+							.println("failed, there is some error in the command");
+				} else if (noOfNodes == 9998) {
+					System.out
+							.println("failed, you are already registered, unregister first");
+				} else if (noOfNodes == 9997) {
+					System.out
+							.println("failed, registered to another user, try a different IP and port");
+				} else if (noOfNodes == 9996) {
+					System.out.println("failed, can’t register. BS full");
+				} else {
+					RoutingTableEntry entry;
 
-        reader.close();
-        writer.close();
-        clientSocket.close();
+					if (noOfNodes < JOINING_NODES_COUNT) {
+						for (int i = 1; i <= noOfNodes; i++) {
+							int index = 3 * i;
+							ip = msgParts[index];
+							port = msgParts[++index];
+							username = msgParts[++index];
 
-        // handle the Registration response
-        boolean success = handleRegistrationMessage(serverResponse);
-        return success;
-    }
+							// add neighbours to the routing table
+							entry = new RoutingTableEntry(username, ip, port);
+							routingTable.add(entry);
+						}
+					} else {
+						
+						int randIndex[] = randomNodeIndices(noOfNodes);
 
-    private String createRegMessage(String ipAddress, int port, String userName) {
+						for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+							System.out.println("JOIN :" + i + ":" + randIndex[i]);
+							int index = 3 * randIndex[i];
+							ip = msgParts[index];
+							port = msgParts[++index];
+							username = msgParts[++index];
 
-       String regMessage = new MessageBuilder().append(REG)
-                .append(ipAddress)
-                .append(port+"")
-                .append(userName)
-               .buildMessage();
+							// add neighbours to the routing table
+							entry = new RoutingTableEntry(username, ip, port);
+							routingTable.add(entry);
+						}
+					}
 
-        return regMessage;
-    }
+					result = true;
+				}
+			}
+		}
 
-    private boolean handleRegistrationMessage(String msg){
-        boolean result = false;
-        String msgParts[] = msg.split("\\s+");
+		return result;
 
-        if(msgParts.length==2){
-            System.out.println("Error Message:" + msgParts[1]);
-        }else {
-            if(REGOK.equals(msgParts[1])){
+	}
 
-                int noOfNodes = Integer.parseInt(msgParts[2]);
+	private int[] randomNodeIndices(int noOfNodes) {
+		int randIndex[] = new int[JOINING_NODES_COUNT];
+		int randNumber;
+		HashSet<Integer> numbers = new HashSet<Integer>();
 
-                String ip, port, username;
+		for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+			do {
+				randNumber = (int) Math.floor(Math.random() * noOfNodes) + 1;
+			} while (numbers.contains(randNumber));
+			randIndex[i] = randNumber;
+			numbers.add(randNumber);
+		}
+		return randIndex;
+	}
 
-                if(noOfNodes == 9999){
-                    System.out.println("failed, there is some error in the command");
-                } else if(noOfNodes == 9998){
-                    System.out.println("failed, you are already registered, unregister first");
-                } else if(noOfNodes == 9997){
-                    System.out.println("failed, registered to another user, try a different IP and port");
-                } else if(noOfNodes == 9996){
-                    System.out.println("failed, can’t register. BS full");
-                } else{
-                    RoutingTableEntry entry;
-                    for ( int i = 1; i <= noOfNodes; i++) {
-                        int index = 3*i;
-                        ip = msgParts[index];
-                        port = msgParts[++index];
-                        username = msgParts[++index];
+	private void joinWithNeighbours() {
 
-                        // add neighbours to the routing table
-                        entry = new RoutingTableEntry(username,ip,port);
-                        routingTable.add(entry);
-                    }
+		// build the UDP JOIN message
+		String joinMessage = new MessageBuilder().append(Commands.JOIN)
+				.append(ipAddress.getHostAddress()).append(port + "")
+				.buildMessage();
 
-                    result = true;
-                }
-            }
-        }
+		// iterate through the routing list and send UDP JOIN message
+		for (RoutingTableEntry entry : routingTable) {
+			try {
+				InetAddress ipAddress = InetAddress.getByName(entry
+						.getIpAddress());
+				int port = Integer.parseInt(entry.getPort());
 
-        return result;
+				// send JOIN via UDP
+				udpClient.sendMessage(joinMessage, ipAddress, port);
 
-    }
+			} catch (UnknownHostException e) {
+				System.err.println("Error sending JOIN message to "
+						+ entry.getIpAddress() + ":" + entry.getPort());
+			}
 
-    private void joinWithNeighbours(){
+		}
 
-        // build the UDP JOIN message
-        String joinMessage = new MessageBuilder()
-                .append(Commands.JOIN)
-                .append(ipAddress.getHostAddress())
-                .append(port +"")
-                .buildMessage();
+	}
 
-        // iterate through the routing list and send UDP JOIN message
-        for (RoutingTableEntry entry : routingTable) {
-            try {
-                InetAddress ipAddress = InetAddress.getByName(entry.getIpAddress());
-                int port = Integer.parseInt(entry.getPort());
+	public void printRoutingTable() {
+		System.out.println("Routing table entries");
+		
+		if (routingTable.size() == 0){
+			System.out.println("No entries present");
+			return;
+		}
+		for (RoutingTableEntry entry: routingTable){
+			System.out.println(entry);
+		}
+	}
 
-                // send JOIN via UDP
-                udpClient.sendMessage(joinMessage,ipAddress,port);
+	public static void main(String[] args) throws IOException {
 
-            } catch (UnknownHostException e) {
-                System.err.println("Error sending JOIN message to "+entry.getIpAddress()+":"+entry.getPort());
-            }
+		boolean isInitialized = false;
+		Scanner scanner = new Scanner(System.in);
 
-        }
+		// System.out.println("Enter bootstrap ipAddress:port  --> ");
+		// String bsInput = scanner.nextLine();
+		//
+		// String ip[] = bsInput.split(":");
+		// bootstrapServerIp = ip[0].trim();
+		// bootStrapServerPort = Integer.parseInt(ip[1]);
 
-    }
+		String input;
+		Node node = null;
+		while (!isInitialized) {
+			System.out.print("Enter the port number to start the node on : ");
+			input = scanner.nextLine();
 
+			InetAddress ipAddress = InetAddress.getLocalHost();
 
-    public static void main(String[] args) throws IOException {
+			// TODO check whether the port number is legal
+			int nodePortNumber = Integer.parseInt(input.trim());
 
-        boolean isInitialized = false;
-        Scanner scanner = new Scanner(System.in);
+			// create a node
+			node = new Node(ipAddress, nodePortNumber);
 
-//        System.out.println("Enter bootstrap ipAddress:port  --> ");
-//        String bsInput = scanner.nextLine();
-//
-//        String ip[] = bsInput.split(":");
-//        bootstrapServerIp = ip[0].trim();
-//        bootStrapServerPort = Integer.parseInt(ip[1]);
+			// register with the bootstrap server
+			isInitialized = node.registerToBootstrapServer(
+					ipAddress.getHostAddress(), nodePortNumber);
 
-        String input;
-        Node node = null;
-        while (!isInitialized){
-            System.out.print("Enter the port number to start the node on : ");
-            input = scanner.nextLine();
+			if (isInitialized) {
+				System.out.println("Node " + ipAddress.getHostAddress() + ":"
+						+ nodePortNumber + " registered successfully");
+				// start the internal server of the node to listen to messages
+				node.server.start();
+			}
 
-            InetAddress ipAddress = InetAddress.getLocalHost();
+		}
+		node.joinWithNeighbours();
 
-            // TODO check whether the port number is legal
-            int nodePortNumber = Integer.parseInt(input.trim());
-
-            // create a node
-            node = new Node(ipAddress, nodePortNumber);
-
-            // register with the bootstrap server
-            isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(),nodePortNumber);
-
-            if (isInitialized) {
-                System.out.println("Node "+ipAddress.getHostAddress()+":"+nodePortNumber+" registered successfully");
-                // start the internal server of the node to listen to messages
-                node.server.start();
-            }
-
-        }
-
-        node.joinWithNeighbours();
-
-
-
-
-
-    }
+		node.printRoutingTable();
+	}
 }
