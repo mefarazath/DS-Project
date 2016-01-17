@@ -158,17 +158,8 @@ public class Node {
         int port;
         try {
             port = Integer.parseInt(input);
-            if (port < 0)
-                return false;
-            else {
-                Socket x = new Socket("localhost", port);
-                return true;
-            }
-        } catch (IOException e) {
-            return true;
+            return !(port < 0 || port > 65535);
         } catch (NumberFormatException e) {
-            return false;
-        } catch (IllegalArgumentException e) {
             return false;
         }
     }
@@ -191,10 +182,13 @@ public class Node {
         while (!isInitialized) {
             System.out.print("Enter the port number to start the node on : ");
             input = scanner.nextLine();
-            if (validityOfPortNumber(input)) {
                 try {
                     InetAddress ipAddress = InetAddress.getLocalHost();
                     // TODO check whether the port number is legal
+
+                    if (!validityOfPortNumber(input))
+                        throw new Exception("Illegal port number");
+
                     int nodePortNumber = Integer.parseInt(input.trim());
 
                     // create a node
@@ -217,9 +211,6 @@ public class Node {
 
                     isInitialized = false;
                 }
-            } else {
-                System.err.println("Port number is not valid");
-            }
 
         }
 
