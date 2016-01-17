@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class Node{
+public class Node {
 
     private static String bootstrapServerIp = "127.0.0.1";
     private static int bootStrapServerPort = 9999;
@@ -29,17 +29,17 @@ public class Node{
     private InetAddress ipAddress;
     private int port;
 
-    private Node(){
-        routingTable = new ArrayList<>();
-        files = new ArrayList<>();
+    private Node() {
+        routingTable = new ArrayList<RoutingTableEntry>();
+        files = new ArrayList<String>();
         udpClient = new UDPClient();
     }
 
-    public Node(InetAddress ipAddress, int port){
+    public Node(InetAddress ipAddress, int port) {
         this();
         this.ipAddress = ipAddress;
         this.port = port;
-        this.server = new Server(ipAddress,port);
+        this.server = new Server(ipAddress, port);
     }
 
 
@@ -49,7 +49,7 @@ public class Node{
         String userName = new Scanner(System.in).nextLine();
 
         // build REG message
-        String msg = createRegMessage(ipAddress,port,userName);
+        String msg = createRegMessage(ipAddress, port, userName);
         System.out.println(msg);
 
         // TCP send and receive
@@ -74,45 +74,45 @@ public class Node{
 
     private String createRegMessage(String ipAddress, int port, String userName) {
 
-       String regMessage = new MessageBuilder().append(Commands.REG)
+        String regMessage = new MessageBuilder().append(Commands.REG)
                 .append(ipAddress)
-                .append(port+"")
+                .append(port + "")
                 .append(userName)
-               .buildMessage();
+                .buildMessage();
 
         return regMessage;
     }
 
-    private boolean handleRegistrationMessage(String msg){
+    private boolean handleRegistrationMessage(String msg) {
         boolean result = false;
         String msgParts[] = msg.split("\\s+");
 
-        if(msgParts.length==2){
+        if (msgParts.length == 2) {
             System.out.println("Error Message:" + msgParts[1]);
-        }else {
-            if(Commands.REGOK.equals(msgParts[1])){
+        } else {
+            if (Commands.REGOK.equals(msgParts[1])) {
 
                 int noOfNodes = Integer.parseInt(msgParts[2]);
                 String ip, port, username;
 
-                if(noOfNodes == 9999){
+                if (noOfNodes == 9999) {
                     System.out.println("failed, there is some error in the command");
-                } else if(noOfNodes == 9998){
+                } else if (noOfNodes == 9998) {
                     System.out.println("failed, you are already registered, unregister first");
-                } else if(noOfNodes == 9997){
+                } else if (noOfNodes == 9997) {
                     System.out.println("failed, registered to another user, try a different IP and port");
-                } else if(noOfNodes == 9996){
+                } else if (noOfNodes == 9996) {
                     System.out.println("failed, can’t register. BS full");
-                } else{
+                } else {
                     RoutingTableEntry entry;
-                    for ( int i = 1; i <= noOfNodes; i++) {
-                        int index = 3*i;
+                    for (int i = 1; i <= noOfNodes; i++) {
+                        int index = 3 * i;
                         ip = msgParts[index];
                         port = msgParts[++index];
                         username = msgParts[++index];
 
                         // add neighbours to the routing table
-                        entry = new RoutingTableEntry(username,ip,port);
+                        entry = new RoutingTableEntry(username, ip, port);
                         routingTable.add(entry);
                     }
 
@@ -125,13 +125,13 @@ public class Node{
 
     }
 
-    private void joinWithNeighbours(){
+    private void joinWithNeighbours() {
 
         // build the UDP JOIN message
         String joinMessage = new MessageBuilder()
                 .append(Commands.JOIN)
                 .append(ipAddress.getHostAddress())
-                .append(port +"")
+                .append(port + "")
                 .buildMessage();
 
         // iterate through the routing list and send UDP JOIN message
@@ -141,16 +141,36 @@ public class Node{
                 int port = Integer.parseInt(entry.getPort());
 
                 // send JOIN via UDP
-                ((UDPClient)udpClient).setDestinationAddress(ipAddress);
-                ((UDPClient)udpClient).setDestinationPort(port);
+                ((UDPClient) udpClient).setDestinationAddress(ipAddress);
+                ((UDPClient) udpClient).setDestinationPort(port);
                 udpClient.send(joinMessage);
 
             } catch (UnknownHostException e) {
-                System.err.println("Error sending JOIN message to "+entry.getIpAddress()+":"+entry.getPort());
+                System.err.println("Error sending JOIN message to " + entry.getIpAddress() + ":" + entry.getPort());
             }
 
         }
 
+    }
+
+    private static boolean validityOfPortNumber(String input) {
+        //check validity of the port number
+        int port;
+        try {
+            port = Integer.parseInt(input);
+            if (port < 0)
+                return false;
+            else {
+                Socket x = new Socket("localhost", port);
+                return true;
+            }
+        } catch (IOException e) {
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
 
@@ -168,42 +188,42 @@ public class Node{
 
         String input;
         Node node = null;
-        while (!isInitialized){
+        while (!isInitialized) {
             System.out.print("Enter the port number to start the node on : ");
             input = scanner.nextLine();
+            if (validityOfPortNumber(input)) {
+                try {
+                    InetAddress ipAddress = InetAddress.getLocalHost();
+                    // TODO check whether the port number is legal
+                    int nodePortNumber = Integer.parseInt(input.trim());
 
-            try {
-                InetAddress ipAddress = InetAddress.getLocalHost();
-                // TODO check whether the port number is legal
-                int nodePortNumber = Integer.parseInt(input.trim());
+                    // create a node
+                    node = new Node(ipAddress, nodePortNumber);
 
-                // create a node
-                node = new Node(ipAddress, nodePortNumber);
+                    // register with the bootstrap server
+                    isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber);
 
-                // register with the bootstrap server
-                isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber);
+                    if (isInitialized) {
+                        System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
+                        // start the internal server of the node to listen to messages
+                        node.server.start();
+                    }
 
-                if (isInitialized) {
-                    System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
-                    // start the internal server of the node to listen to messages
-                    node.server.start();
+                } catch (Exception ex) {
+                    System.err.println("Unable to initialize the node");
+                    if (isInitialized) {
+                        // need to deregister from the BS
+                    }
+
+                    isInitialized = false;
                 }
-
-            } catch (Exception ex){
-                System.err.println("Unable to initialize the node");
-                if (isInitialized) {
-                    // need to deregister from the BS
-                }
-
-                isInitialized = false;
+            } else {
+                System.err.println("Port number is not valid");
             }
 
         }
 
         node.joinWithNeighbours();
-
-
-
 
 
     }
