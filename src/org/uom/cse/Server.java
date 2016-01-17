@@ -30,6 +30,8 @@ public class Server extends Thread{
             String message = udpClient.receive();
             System.out.println("Recieved : "+message);
 
+            handleMessage(message);
+
         }
 
         // call the handleMessage() from here
@@ -40,6 +42,8 @@ public class Server extends Thread{
     public  void handleMessage(String message){
 
         // select which handle method to call here.
+        // TODO based on the message write seperate handle message
+        // eg : for a JOIN message send a JOINOK etc.
 
 
     }
