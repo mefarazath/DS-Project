@@ -162,7 +162,6 @@ public class Node{
 						int randIndex[] = randomNodeIndices(noOfNodes);
 
 						for (int i = 0; i < JOINING_NODES_COUNT; i++) {
-							System.out.println("JOIN :" + i + ":" + randIndex[i]);
 							int index = 3 * randIndex[i];
 							ip = msgParts[index];
 							port = msgParts[++index];
