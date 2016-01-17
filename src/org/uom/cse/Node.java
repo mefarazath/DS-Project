@@ -1,5 +1,6 @@
 package org.uom.cse;
 
+
 import org.uom.cse.communication.CommunicationClient;
 import org.uom.cse.message.MessageBuilder;
 import org.uom.cse.communication.UDPClient;
@@ -9,15 +10,31 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Scanner;
+
+import org.uom.cse.message.MessageBuilder;
+import org.uom.cse.communication.UDPClient;
+
 
 public class Node{
 
-    private static String bootstrapServerIp = "127.0.0.1";
-    private static int bootStrapServerPort = 9999;
+    private static String bootstrapServerIp;
+    private static int bootstrapServerPort;
 
     private static final String LOCALHOST = "localhost";
+    
+    private static final int JOINING_NODES_COUNT = 2;
+    
+    // commands
+ 	private static final String REGOK = "REGOK";
+ 	private static final String REG = "REG";
+
+ 	private static final String SERVER_IP = "bootstrapServerIp";
+ 	private static final String SERVER_PORT = "bootstrapServerPort";
+ 	private static final String PROPERTIES_FILE = "config.properties";
 
     List<RoutingTableEntry> routingTable;
     List<String> files;
@@ -28,11 +45,13 @@ public class Node{
     // IP address and port of the node
     private InetAddress ipAddress;
     private int port;
+    private Properties properties;
 
     private Node(){
         routingTable = new ArrayList<>();
         files = new ArrayList<>();
         udpClient = new UDPClient();
+        properties = loadProperties();
     }
 
     public Node(InetAddress ipAddress, int port){
@@ -40,7 +59,28 @@ public class Node{
         this.ipAddress = ipAddress;
         this.port = port;
         this.server = new Server(ipAddress,port);
+        properties = loadProperties();
     }
+    
+    private Properties loadProperties() {
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileInputStream(PROPERTIES_FILE));
+			
+			bootstrapServerIp = properties.getProperty(SERVER_IP);
+			bootstrapServerPort = Integer.parseInt(properties
+					.getProperty(SERVER_PORT));
+			
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return properties;
+	}
 
 
     public boolean registerToBootstrapServer(String ipAddress, int port) throws IOException {
@@ -53,7 +93,7 @@ public class Node{
         System.out.println(msg);
 
         // TCP send and receive
-        Socket clientSocket = new Socket(bootstrapServerIp, bootStrapServerPort);
+        Socket clientSocket = new Socket(bootstrapServerIp, bootstrapServerPort);
 
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
         writer.write(msg);
@@ -104,19 +144,37 @@ public class Node{
                 } else if(noOfNodes == 9996){
                     System.out.println("failed, can’t register. BS full");
                 } else{
-                    RoutingTableEntry entry;
-                    for ( int i = 1; i <= noOfNodes; i++) {
-                        int index = 3*i;
-                        ip = msgParts[index];
-                        port = msgParts[++index];
-                        username = msgParts[++index];
+                	RoutingTableEntry entry;
 
-                        // add neighbours to the routing table
-                        entry = new RoutingTableEntry(username,ip,port);
-                        routingTable.add(entry);
-                    }
+					if (noOfNodes < JOINING_NODES_COUNT) {
+						for (int i = 1; i <= noOfNodes; i++) {
+							int index = 3 * i;
+							ip = msgParts[index];
+							port = msgParts[++index];
+							username = msgParts[++index];
 
-                    result = true;
+							// add neighbours to the routing table
+							entry = new RoutingTableEntry(username, ip, port);
+							routingTable.add(entry);
+						}
+					} else {
+						
+						int randIndex[] = randomNodeIndices(noOfNodes);
+
+						for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+							System.out.println("JOIN :" + i + ":" + randIndex[i]);
+							int index = 3 * randIndex[i];
+							ip = msgParts[index];
+							port = msgParts[++index];
+							username = msgParts[++index];
+
+							// add neighbours to the routing table
+							entry = new RoutingTableEntry(username, ip, port);
+							routingTable.add(entry);
+						}
+					}
+
+					result = true;
                 }
             }
         }
@@ -124,6 +182,21 @@ public class Node{
         return result;
 
     }
+    
+    private int[] randomNodeIndices(int noOfNodes) {
+		int randIndex[] = new int[JOINING_NODES_COUNT];
+		int randNumber;
+		HashSet<Integer> numbers = new HashSet<Integer>();
+
+		for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+			do {
+				randNumber = (int) Math.floor(Math.random() * noOfNodes) + 1;
+			} while (numbers.contains(randNumber));
+			randIndex[i] = randNumber;
+			numbers.add(randNumber);
+		}
+		return randIndex;
+	}
 
     private void joinWithNeighbours(){
 
@@ -152,6 +225,18 @@ public class Node{
         }
 
     }
+    
+	public void printRoutingTable() {
+		System.out.println("Routing table entries");
+		
+		if (routingTable.size() == 0){
+			System.out.println("No entries present");
+			return;
+		}
+		for (RoutingTableEntry entry: routingTable){
+			System.out.println(entry);
+		}
+	}
 
 
     public static void main(String[] args) throws IOException {
@@ -202,9 +287,6 @@ public class Node{
 
         node.joinWithNeighbours();
 
-
-
-
-
-    }
+		node.printRoutingTable();
+	}
 }
