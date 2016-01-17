@@ -39,7 +39,7 @@ public class Node {
         this();
         this.ipAddress = ipAddress;
         this.port = port;
-        this.server = new Server(ipAddress, port);
+        this.server = new Server(ipAddress, port, routingTable);
     }
 
 
@@ -215,7 +215,6 @@ public class Node {
         }
 
         node.joinWithNeighbours();
-
 
     }
 }
