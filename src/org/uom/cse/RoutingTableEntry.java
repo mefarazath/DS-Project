@@ -5,11 +5,13 @@ public class RoutingTableEntry {
     private String userName;
     private String ipAddress;
     private String port;
+    private boolean active;
 
     public RoutingTableEntry(String userName, String ipAddress, String port) {
         this.userName = userName;
         this.ipAddress = ipAddress;
         this.port = port;
+        this.active = true;
     }
 
     public String getUserName() {
@@ -22,6 +24,12 @@ public class RoutingTableEntry {
 
     public String getPort() {
         return port;
+    }
+
+    public boolean isActive(){ return active; }
+
+    public void setActive(boolean active){
+        this.active = active;
     }
 
     @Override
