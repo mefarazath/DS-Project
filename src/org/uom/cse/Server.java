@@ -67,6 +67,11 @@ public class Server extends Thread {
             if(!this.handleLEAVEOK(msgParts)){
                 System.err.println("Message error : " + message);
             }
+        }else if(Commands.ERROR.equals(msgParts[1])){
+            //length LEAVE IP_address port_no
+            if(!this.handleERROR(msgParts)){
+                System.err.println("Message error : " + message);
+            }
         }
 
         // select which handle method to call here.
@@ -81,6 +86,10 @@ public class Server extends Thread {
         //return SUCCESS_CODE or ERROR_CODE
 
         return Commands.SUCCESS_CODE;
+    }
+
+    private boolean handleERROR(String[] msgPatrs){
+        return true;
     }
 
     private boolean handleJOIN(String[] msgParts) {

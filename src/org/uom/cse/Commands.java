@@ -16,4 +16,6 @@ public class Commands {
     public static final String SUCCESS_CODE = "0";
     public static final String ERROR_CODE = "9999";
 
+    public static final String ERROR = "ERROR";
+
 }
