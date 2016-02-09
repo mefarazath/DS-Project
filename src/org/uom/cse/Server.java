@@ -11,11 +11,13 @@ public class Server extends Thread{
     private UDPClient udpClient;
     private InetAddress ipAddress;
     private int port;
+    private Node node;
 
-    public Server(InetAddress ipAddress, int port) {
+    public Server(Node node,InetAddress ipAddress, int port) {
+        this.node = node;
         this.ipAddress = ipAddress;
         this.port = port;
-        this.routingTable = new ArrayList<>();
+        this.routingTable = new ArrayList();
         this.udpClient = new UDPClient(ipAddress,port);
     }
 

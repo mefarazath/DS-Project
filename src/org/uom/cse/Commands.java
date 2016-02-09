@@ -9,4 +9,7 @@ public class Commands {
 
     public static final String JOIN = "JOIN";
 
+    public static final String SER = "SER";
+    public static final String SEROK = "SEROK";
+
 }
