@@ -40,7 +40,7 @@ public class RoutingTableEntry {
         return true;
     }
 
-    public boolean equal(String ipAddress, String port){
+    public boolean equals(String ipAddress, String port){
         if(ipAddress.equals(this.ipAddress) && port.equals(this.port)){
             return true;
         }

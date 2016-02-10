@@ -48,8 +48,8 @@ public class Node {
     private Properties properties;
 
     private Node() {
-        routingTable = new ArrayList<>();
-        files = new ArrayList<>();
+        routingTable = new ArrayList<RoutingTableEntry>();
+        files = new ArrayList<String>();
         properties = loadProperties();
     }
 
@@ -295,7 +295,7 @@ public class Node {
 
         //search in the the own file list
         //search message format - length SER IP port file_name hops
-        Set<String> filesFound = new HashSet<>();
+        Set<String> filesFound = new HashSet<String>();
 
         String[] searchMessageComponents = searchMessage.split(" ");
 
