@@ -1,7 +1,10 @@
 package org.uom.cse;
 
-import org.uom.cse.communication.client.CommunicationClient;
 import org.uom.cse.communication.client.UDPClient;
+import org.uom.cse.communication.client.WebServiceClient;
+import org.uom.cse.communication.server.socket.SocketServer;
+import org.uom.cse.communication.server.webservice.SearchServiceImpl;
+import org.uom.cse.communication.server.webservice.SearchServicePublisher;
 import org.uom.cse.message.MessageBuilder;
 
 import java.io.*;
@@ -26,8 +29,9 @@ public class Node {
     List<RoutingTableEntry> routingTable;
     List<String> files;
 
-    private Server server;
-    private CommunicationClient udpClient;
+    private SocketServer server;
+    private UDPClient udpClient;
+    private WebServiceClient webServiceClient;
 
     // IP address and port of the node
     private InetAddress ipAddress;
@@ -37,7 +41,6 @@ public class Node {
     private Node() {
         routingTable = new ArrayList<>();
         files = new ArrayList<>();
-        udpClient = new UDPClient();
         properties = loadProperties();
     }
 
@@ -46,7 +49,8 @@ public class Node {
         this.ipAddress = ipAddress;
         this.port = port;
         properties = loadProperties();
-        this.server = new Server(this,ipAddress, port);
+        this.udpClient = new UDPClient(ipAddress,port);
+        this.server = new SocketServer(this,ipAddress, port);
     }
 
     public static void main(String[] args) throws IOException {
@@ -82,6 +86,10 @@ public class Node {
                     System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
                     // start the internal server of the node to listen to messages
                     node.server.start();
+
+                    // start the search Web Service
+                    SearchServicePublisher.publish(ipAddress.getHostAddress(), nodePortNumber, new SearchServiceImpl(node));
+
                 }
 
             } catch (Exception ex) {
@@ -252,10 +260,7 @@ public class Node {
                 InetAddress ipAddress = InetAddress.getByName(entry.getIpAddress());
                 int port = Integer.parseInt(entry.getPort());
 
-                // send JOIN via UDP
-                ((UDPClient) udpClient).setDestinationAddress(ipAddress);
-                ((UDPClient) udpClient).setDestinationPort(port);
-                udpClient.send(joinMessage);
+                udpClient.send(ipAddress, port, joinMessage);
 
             } catch (UnknownHostException e) {
                 System.err.println("Error sending JOIN message to " + entry.getIpAddress() + ":" + entry.getPort());
@@ -322,10 +327,7 @@ public class Node {
                     InetAddress ipAddress = InetAddress.getByName(entry.getIpAddress());
                     int port = Integer.parseInt(entry.getPort());
 
-                    // send SER via UDP
-                    ((UDPClient) udpClient).setDestinationAddress(ipAddress);
-                    ((UDPClient) udpClient).setDestinationPort(port);
-                    udpClient.send(searchMessage);
+                    udpClient.send(ipAddress, port, searchMessage);
 
                     System.out.println("Search message sent to " + entry.getIpAddress() + ":" + entry.getPort());
 

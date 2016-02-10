@@ -1,20 +1,25 @@
-package org.uom.cse;
+package org.uom.cse.communication.server.socket;
 
 import org.uom.cse.Commands;
+import org.uom.cse.Node;
 import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.message.MessageBuilder;
 
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class Server extends Thread {
+public class SocketServer extends Thread {
+    private static final int size = 65553;
+    private static final String ERROR = "ERROR";
 
     private UDPClient udpClient;
     private InetAddress ipAddress;
     private int port;
     private Node node;
 
-    public Server(Node node, InetAddress ipAddress, int port) {
+    public SocketServer(Node node, InetAddress ipAddress, int port) {
         this.node = node;
         this.ipAddress = ipAddress;
         this.port = port;
@@ -29,7 +34,7 @@ public class Server extends Thread {
 
         while (true) {
 
-            String message = udpClient.receive();
+            String message = receive();
             System.out.println("Received : " + message);
 
             handleMessage(message);
@@ -39,6 +44,38 @@ public class Server extends Thread {
         // call the handleMessage() from here
         // handle according to the method --> ie. send appropriate responses.
 
+    }
+
+    public String receive() {
+        DatagramSocket clientSocket = null;
+        String outputMessage = ERROR;
+        try {
+            if (this.port == 0){
+                clientSocket = new DatagramSocket();
+            } else {
+                clientSocket = new DatagramSocket(this.port, ipAddress);
+            }
+
+            byte[] receiveData = new byte[size];
+
+            // receive data
+            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            clientSocket.receive(receivePacket);
+            System.out.println(receivePacket.getAddress()+" "+receivePacket.getPort());
+
+            // output the received bytes as a string
+            outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
+            //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
+
+        }catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            if (clientSocket != null) {
+                clientSocket.close();
+            }
+
+            return outputMessage;
+        }
     }
 
     public void handleMessage(String message) {
@@ -128,15 +165,16 @@ public class Server extends Thread {
         }
 
         try {
-            udpClient.setDestinationAddress(InetAddress.getByName(msgParts[2]));
-            udpClient.setDestinationPort(Integer.parseInt(msgParts[3]));
 
             //create JOINOK message
             String joinOkMessage = new MessageBuilder().append(Commands.JOINOK)
                     .append(successCode)
                     .buildMessage();
 
-            udpClient.send(joinOkMessage);
+            InetAddress ipAddress = InetAddress.getByName(msgParts[2]);
+            int port = Integer.parseInt(msgParts[3]);
+
+            udpClient.send(ipAddress, port, joinOkMessage);
 
         } catch (UnknownHostException e) {
             return false;
@@ -179,15 +217,15 @@ public class Server extends Thread {
         }
 
         try {
-            udpClient.setDestinationAddress(InetAddress.getByName(msgParts[2]));
-            udpClient.setDestinationPort(Integer.parseInt(msgParts[3]));
+            InetAddress ipAddress = InetAddress.getByName(msgParts[2]);
+            int port = Integer.parseInt(msgParts[3]);
 
             //create LEAVEOK message
             String leaveOkMessage = new MessageBuilder().append(Commands.LEAVEOK)
                     .append(successCode)
                     .buildMessage();
 
-            udpClient.send(leaveOkMessage);
+            udpClient.send(ipAddress, port, leaveOkMessage);
 
         } catch (UnknownHostException e) {
             return false;
@@ -225,12 +263,10 @@ public class Server extends Thread {
 
             try {
                 InetAddress ipAddressSM = InetAddress.getByName(message.split(" ")[2]);
-                String portSM = message.split(" ")[3];
+                int portSM = Integer.parseInt(message.split(" ")[3]);
 
-                udpClient.setDestinationAddress(ipAddressSM);
-                udpClient.setDestinationPort(Integer.parseInt(portSM));
 
-                udpClient.send(searchOkMessage);
+                udpClient.send(ipAddressSM, portSM, searchOkMessage);
 
             } catch (UnknownHostException e) {
                 return false;

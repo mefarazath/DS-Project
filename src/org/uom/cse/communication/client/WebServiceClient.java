@@ -1,5 +1,6 @@
 package org.uom.cse.communication.client;
 
+import org.uom.cse.Commands;
 import org.uom.cse.communication.server.webservice.SearchService;
 
 import javax.xml.namespace.QName;
@@ -7,34 +8,33 @@ import javax.xml.ws.Service;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class WebServiceClient implements CommunicationClient {
+public class WebServiceClient{
+
+    public static final String SERVICE_NAME = "searchService";
+    public static final String QNAME = "http://webservice.server.communication.cse.uom.org/";
+    public static final String SERVICE_IMPL = "SearchServiceImpl" ;
 
 
-    @Override
-    public String receive() {
-        return null;
+    public static void sendSearchQuery(String ipAddress, int port, String query) throws MalformedURLException {
+        SearchService service = init(ipAddress, port);
+        service.search(query);
     }
 
-    @Override
-    public void send(String message) {
-        URL url = null;
-        try {
-            url = new URL("http://localhost:9999/service?wsdl");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+    public static void sendSearchReply(String ipAddress, int port, String message) throws MalformedURLException {
+        SearchService service = init(ipAddress, port);
+        service.searchReply(message);
+    }
 
-        //1st argument service URI, refer to wsdl document above
-        //2nd argument is service name, refer to wsdl document above
-        QName qname = new QName("http://webservice.communication.cse.uom.org/", "SearchServiceImplService");
+
+    private static SearchService init(String ipAddress, int port) throws MalformedURLException {
+
+        String urlString = "http://" + ipAddress + ":" + port + "/" + SERVICE_NAME + "?wsdl";
+
+        URL url = new URL(urlString);
+        QName qname = new QName(QNAME,SERVICE_IMPL);
         Service service = Service.create(url, qname);
-
-        SearchService searchService = service.getPort(SearchService.class);
-        searchService.search(message);
+        return service.getPort(SearchService.class);
 
     }
 
-    public static void main(String[] args) {
-        new WebServiceClient().send("JACK JILL JUCK");
-    }
 }
