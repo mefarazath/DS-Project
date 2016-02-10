@@ -17,6 +17,7 @@ import java.util.*;
 public class Node {
 
     private static final String LOCALHOST = "localhost";
+    private static final String QUIT = "q";
     private static final int JOINING_NODES_COUNT = 2;
     // commands
     private static final String REGOK = "REGOK";
@@ -62,12 +63,9 @@ public class Node {
         boolean isInitialized = false;
         Scanner scanner = new Scanner(System.in);
 
-//        System.out.println("Enter bootstrap ipAddress:port  --> ");
-//        String bsInput = scanner.nextLine();
-//
-//        String ip[] = bsInput.split(":");
-//        bootstrapServerIp = ip[0].trim();
-//        bootStrapServerPort = Integer.parseInt(ip[1]);
+        InetAddress ipAddress = null;
+        int nodePortNumber = 0;
+        String userName = "";
 
         String input;
         Node node = null;
@@ -75,31 +73,35 @@ public class Node {
             System.out.print("Enter the port number to start the node on : ");
             input = scanner.nextLine();
 
+            System.out.print("Enter username : ");
+            userName = new Scanner(System.in).nextLine();
+
             try {
-                InetAddress ipAddress = InetAddress.getLocalHost();
-                // TODO check whether the port number is legal
-                int nodePortNumber = Integer.parseInt(input.trim());
+                ipAddress = InetAddress.getLocalHost();
+                nodePortNumber = Integer.parseInt(input.trim());
+
+                // TODO check port number
 
                 // create a node
                 node = new Node(ipAddress, nodePortNumber);
 
                 // register with the bootstrap server
-                isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber);
+                isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber,userName);
 
                 if (isInitialized) {
                     System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
                     // start the internal server of the node to listen to messages
                     node.server.start();
-
                     // start the search Web Service
                     SearchServicePublisher.publish(ipAddress.getHostAddress(), nodePortNumber, new SearchServiceImpl(node));
-
                 }
 
             } catch (Exception ex) {
-                System.err.println("Unable to initialize the node");
+                System.err.println("Unable to initialize the node "+ex.getMessage());
+
                 if (isInitialized) {
                     // need to deregister from the BS
+                    node.deregisterFromBS(ipAddress,nodePortNumber,userName);
                 }
 
                 isInitialized = false;
@@ -109,9 +111,48 @@ public class Node {
 
         node.joinWithNeighbours();
 
-        node.printRoutingTable();
 
-        node.initializeSearch("file");
+        System.out.println("\n\n");
+        String choice = "";
+
+        while (!choice.equalsIgnoreCase(QUIT)){
+            System.out.println("1. Print File List");
+            System.out.println("2. Print Routing Table");
+            System.out.println("3. Unregister Node");
+            System.out.println("4. Search");
+            System.out.println("Please Enter your choice (Enter q to quit) :");
+
+            choice = scanner.nextLine();
+
+            switch (choice.toLowerCase()){
+                case "1" :
+                    System.out.println("Printing File List");
+                    break;
+
+                case "2" :
+                    node.printRoutingTable();
+                    break;
+
+                case "3" :
+                    node.deregisterFromBS(ipAddress,nodePortNumber,userName);
+                    break;
+
+                case "4" :
+                    System.out.println("Enter File name to search for : ");
+                    String fileName = scanner.nextLine();
+                    node.search(fileName);
+                    break;
+
+                case QUIT :
+                    System.out.println("Deregistering from the BS");
+                    node.deregisterFromBS(ipAddress,nodePortNumber,userName);
+                    break;
+
+                default:
+                    System.out.println("\nEnter valid choice");
+            }
+        }
+        System.exit(0);
     }
 
     private Properties loadProperties() {
@@ -137,15 +178,7 @@ public class Node {
     }
 
 
-    public boolean registerToBootstrapServer(String ipAddress, int port) throws IOException {
-        // send REG message to the bootstrap server
-        System.out.print("Enter username : ");
-        String userName = new Scanner(System.in).nextLine();
-
-        // build REG message
-        String msg = createRegMessage(ipAddress, port, userName);
-        System.out.println(msg);
-
+    public String sendMessageToBS(String msg) throws IOException {
         // TCP send and receive
         Socket clientSocket = new Socket(bootstrapServerIp, bootstrapServerPort);
 
@@ -161,9 +194,31 @@ public class Node {
         writer.close();
         clientSocket.close();
 
+        return serverResponse;
+    }
+
+    public boolean registerToBootstrapServer(String ipAddress, int port,String userName) throws IOException {
+        // send REG message to the bootstrap server
+
+
+        // build REG message
+        String msg = createRegMessage(ipAddress, port, userName);
+        System.out.println(msg);
+
+        String serverResponse = sendMessageToBS(msg);
         // handle the Registration response
         boolean success = handleRegistrationMessage(serverResponse);
         return success;
+    }
+
+    public void deregisterFromBS(InetAddress bsAddress, int port, String username) throws IOException {
+        String deregMessage = new MessageBuilder().append(Commands.UNREG)
+                .append(bsAddress.getHostAddress())
+                .append(port + "")
+                .append(username)
+                .buildMessage();
+
+        sendMessageToBS(deregMessage);
     }
 
     private String createRegMessage(String ipAddress, int port, String userName) {
@@ -277,15 +332,18 @@ public class Node {
     }
 
     public void printRoutingTable() {
-        System.out.println("Routing table entries");
+        System.out.println("\nRouting Table");
 
         if (routingTable.size() == 0) {
             System.out.println("No entries present");
             return;
         }
+
+        int count = 0;
         for (RoutingTableEntry entry : routingTable) {
-            System.out.println(entry);
+            System.out.println( (++count) + "\t" +entry);
         }
+        System.out.println();
     }
 
     public void search(String searchMessage) {
