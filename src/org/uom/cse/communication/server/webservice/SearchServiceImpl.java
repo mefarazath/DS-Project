@@ -2,14 +2,15 @@ package org.uom.cse.communication.server.webservice;
 
 
 import org.uom.cse.Node;
+import org.uom.cse.message.SearchQuery;
 
 import javax.jws.WebService;
 
 @WebService(endpointInterface = "org.uom.cse.communication.server.webservice.SearchService")
-public class SearchServiceImpl implements SearchService{
+public class SearchServiceImpl implements SearchService {
     private Node node;
 
-    public SearchServiceImpl(){
+    public SearchServiceImpl() {
 
     }
 
@@ -20,12 +21,21 @@ public class SearchServiceImpl implements SearchService{
     @Override
     public void search(String searchMessage) {
         node.search(searchMessage);
-        System.out.println("Search Query received : "+searchMessage);
+        System.out.println("Search Query received : " + searchMessage);
     }
 
     @Override
     public void searchReply(String queryReply) {
-        System.out.println("Search Reply received : "+queryReply);
+
+        String[] messageComponents = queryReply.split(" ");
+
+        SearchQuery searchQuery = node.getSentMessages().get(messageComponents[messageComponents.length - 1]);
+
+        Long latency = System.currentTimeMillis() - searchQuery.getSearchTime();
+        String hops = messageComponents[5];
+
+        System.out.println(queryReply);
+        System.out.println("Search successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops");
     }
 
 }

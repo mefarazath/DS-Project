@@ -431,13 +431,15 @@ public class Node {
 
             int hopsSM = Integer.parseInt(searchMessage.split(" ")[searchMessageComponents.length - 2]);
 
+            fileNameSM = fileNameSM.toLowerCase();
             String[] tokens = fileNameSM.split(" ");
 
             String outputMessage = null;
 
 
             for (String fileName : fileList) {
-                List<String> fileNameTokens = Arrays.asList(fileName.split(" "));
+                String temp = fileName.toLowerCase();
+                List<String> fileNameTokens = Arrays.asList(temp.split(" "));
                 for (String token : tokens) {
                     if (fileNameTokens.contains(token)) {
                         filesFound.add(fileName);
@@ -487,7 +489,7 @@ public class Node {
                     if (udp) {
                         udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     } else{
-                        webServiceClient.sendSearchQuery(ipAddressSM, Integer.parseInt(portSM), outputMessage);
+                        webServiceClient.sendSearchReply(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     }
                 } catch (Exception e) {
                     System.err.println("Error sending SEROK message to " + ipAddressSM + ":" + portSM);
