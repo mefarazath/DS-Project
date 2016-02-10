@@ -333,6 +333,8 @@ public class Node {
                     System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
                 }
             }
+
+            outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound);
         } else if (hopsSM != 0) {
             outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound);
         } else {
