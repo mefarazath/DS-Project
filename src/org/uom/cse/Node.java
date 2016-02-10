@@ -44,11 +44,11 @@ public class Node {
         return routingTable;
     }
 
-    public List<String> getFiles() {
-            return files;
+    public List<String> getFileList() {
+            return fileList;
     }
 
-    private List<String> files;
+    private List<String> fileList;
 
     private SocketServer server;
     private UDPClient udpClient;
@@ -61,7 +61,7 @@ public class Node {
 
     private Node() {
         routingTable = new ArrayList<>();
-        files = new ArrayList<>();
+        fileList = new ArrayList<>();
     }
 
     public Node(InetAddress ipAddress, int port) {
@@ -144,7 +144,7 @@ public class Node {
 
             switch (choice.toLowerCase()){
                 case "1" :
-                    System.out.println("Printing File List");
+                    node.printFiles();
                     break;
 
                 case "2" :
@@ -288,7 +288,7 @@ public class Node {
                         }
                     } else {
 
-                        int randIndex[] = randomNodeIndices(noOfNodes);
+                        int randIndex[] = randomNodeIndices(noOfNodes,JOINING_NODES_COUNT);
 
                         for (int i = 0; i < JOINING_NODES_COUNT; i++) {
                             int index = 3 * randIndex[i];
@@ -311,12 +311,12 @@ public class Node {
 
     }
 
-    private int[] randomNodeIndices(int noOfNodes) {
-        int randIndex[] = new int[JOINING_NODES_COUNT];
+    private int[] randomNodeIndices(int noOfNodes, int numberOfIndices) {
+        int randIndex[] = new int[numberOfIndices];
         int randNumber;
         HashSet<Integer> numbers = new HashSet<Integer>();
 
-        for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+        for (int i = 0; i < numberOfIndices; i++) {
             do {
                 randNumber = (int) Math.floor(Math.random() * noOfNodes) + 1;
             } while (numbers.contains(randNumber));
@@ -369,14 +369,33 @@ public class Node {
     public void loadFiles() throws IOException {
 
         BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
+        List<String> temp = new ArrayList<>();
 
         String line;
         while ( (line = bufferedReader.readLine()) != null) {
-
+            temp.add(line.trim());
         }
 
+        int fileToSelect = ((int)Math.floor(Math.random()))%3 + 3;
 
+        int[] randomIndices = randomNodeIndices(temp.size(),fileToSelect);
+
+        for (int i : randomIndices) {
+            fileList.add(temp.get(i));
+        }
+
+        System.out.println(fileToSelect + "files loaded");
     }
+
+    public void printFiles(){
+
+        System.out.println("\nFile List");
+        int count = 0;
+        for(String fileName : fileList) {
+            System.out.println((++count) + ".\t" + fileName);
+        }
+    }
+
 
     public void search(String searchMessage) {
 
@@ -403,7 +422,7 @@ public class Node {
         String outputMessage = null;
 
 
-        for (String fileName : files) {
+        for (String fileName : fileList) {
             List<String> fileNameTokens = Arrays.asList(fileName.split(" "));
             for (String token : tokens) {
                 if (fileNameTokens.contains(token)) {
