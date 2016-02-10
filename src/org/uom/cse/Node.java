@@ -1,7 +1,6 @@
 package org.uom.cse;
 
 import org.uom.cse.communication.CommunicationClient;
-import org.uom.cse.message.MessageBuilder;
 import org.uom.cse.communication.UDPClient;
 import org.uom.cse.message.MessageBuilder;
 
@@ -11,27 +10,19 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-import org.uom.cse.message.MessageBuilder;
-import org.uom.cse.communication.UDPClient;
 
-
-public class Node{
-
-    private static String bootstrapServerIp;
-    private static int bootstrapServerPort;
+public class Node {
 
     private static final String LOCALHOST = "localhost";
-    
     private static final int JOINING_NODES_COUNT = 2;
-    
     // commands
- 	private static final String REGOK = "REGOK";
- 	private static final String REG = "REG";
-
- 	private static final String SERVER_IP = "bootstrapServerIp";
- 	private static final String SERVER_PORT = "bootstrapServerPort";
- 	private static final String PROPERTIES_FILE = "config.properties";
-
+    private static final String REGOK = "REGOK";
+    private static final String REG = "REG";
+    private static final String SERVER_IP = "bootstrapServerIp";
+    private static final String SERVER_PORT = "bootstrapServerPort";
+    private static final String PROPERTIES_FILE = "config.properties";
+    private static String bootstrapServerIp;
+    private static int bootstrapServerPort;
     List<RoutingTableEntry> routingTable;
     List<String> files;
 
@@ -54,7 +45,7 @@ public class Node{
         this();
         this.ipAddress = ipAddress;
         this.port = port;
-        this.server = new Server(ipAddress,port);
+        this.server = new Server(ipAddress, port);
         properties = loadProperties();
     }
 
@@ -112,24 +103,24 @@ public class Node{
     }
 
     private Properties loadProperties() {
-		Properties properties = new Properties();
-		try {
-			properties.load(new FileInputStream(PROPERTIES_FILE));
-			
-			bootstrapServerIp = properties.getProperty(SERVER_IP);
-			bootstrapServerPort = Integer.parseInt(properties
-					.getProperty(SERVER_PORT));
-			
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return properties;
-	}
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream(PROPERTIES_FILE));
+
+            bootstrapServerIp = properties.getProperty(SERVER_IP);
+            bootstrapServerPort = Integer.parseInt(properties
+                    .getProperty(SERVER_PORT));
+
+
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return properties;
+    }
 
 
     public boolean registerToBootstrapServer(String ipAddress, int port) throws IOException {
@@ -192,37 +183,37 @@ public class Node{
                     System.out.println("failed, registered to another user, try a different IP and port");
                 } else if (noOfNodes == 9996) {
                     System.out.println("failed, can’t register. BS full");
-                } else{
-                	RoutingTableEntry entry;
+                } else {
+                    RoutingTableEntry entry;
 
-					if (noOfNodes < JOINING_NODES_COUNT) {
-						for (int i = 1; i <= noOfNodes; i++) {
-							int index = 3 * i;
-							ip = msgParts[index];
-							port = msgParts[++index];
-							username = msgParts[++index];
+                    if (noOfNodes < JOINING_NODES_COUNT) {
+                        for (int i = 1; i <= noOfNodes; i++) {
+                            int index = 3 * i;
+                            ip = msgParts[index];
+                            port = msgParts[++index];
+                            username = msgParts[++index];
 
-							// add neighbours to the routing table
-							entry = new RoutingTableEntry(username, ip, port);
-							routingTable.add(entry);
-						}
-					} else {
+                            // add neighbours to the routing table
+                            entry = new RoutingTableEntry(username, ip, port);
+                            routingTable.add(entry);
+                        }
+                    } else {
 
-						int randIndex[] = randomNodeIndices(noOfNodes);
+                        int randIndex[] = randomNodeIndices(noOfNodes);
 
-						for (int i = 0; i < JOINING_NODES_COUNT; i++) {
-							int index = 3 * randIndex[i];
-							ip = msgParts[index];
-							port = msgParts[++index];
-							username = msgParts[++index];
+                        for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+                            int index = 3 * randIndex[i];
+                            ip = msgParts[index];
+                            port = msgParts[++index];
+                            username = msgParts[++index];
 
-							// add neighbours to the routing table
-							entry = new RoutingTableEntry(username, ip, port);
-							routingTable.add(entry);
-						}
-					}
+                            // add neighbours to the routing table
+                            entry = new RoutingTableEntry(username, ip, port);
+                            routingTable.add(entry);
+                        }
+                    }
 
-					result = true;
+                    result = true;
                 }
             }
         }
@@ -230,29 +221,29 @@ public class Node{
         return result;
 
     }
-    
+
     private int[] randomNodeIndices(int noOfNodes) {
-		int randIndex[] = new int[JOINING_NODES_COUNT];
-		int randNumber;
-		HashSet<Integer> numbers = new HashSet<Integer>();
+        int randIndex[] = new int[JOINING_NODES_COUNT];
+        int randNumber;
+        HashSet<Integer> numbers = new HashSet<Integer>();
 
-		for (int i = 0; i < JOINING_NODES_COUNT; i++) {
-			do {
-				randNumber = (int) Math.floor(Math.random() * noOfNodes) + 1;
-			} while (numbers.contains(randNumber));
-			randIndex[i] = randNumber;
-			numbers.add(randNumber);
-		}
-		return randIndex;
-	}
+        for (int i = 0; i < JOINING_NODES_COUNT; i++) {
+            do {
+                randNumber = (int) Math.floor(Math.random() * noOfNodes) + 1;
+            } while (numbers.contains(randNumber));
+            randIndex[i] = randNumber;
+            numbers.add(randNumber);
+        }
+        return randIndex;
+    }
 
-    private void joinWithNeighbours(){
+    private void joinWithNeighbours() {
 
         // build the UDP JOIN message
         String joinMessage = new MessageBuilder()
                 .append(Commands.JOIN)
                 .append(ipAddress.getHostAddress())
-                .append(port +"")
+                .append(port + "")
                 .buildMessage();
 
         // iterate through the routing list and send UDP JOIN message
@@ -262,8 +253,8 @@ public class Node{
                 int port = Integer.parseInt(entry.getPort());
 
                 // send JOIN via UDP
-                ((UDPClient)udpClient).setDestinationAddress(ipAddress);
-                ((UDPClient)udpClient).setDestinationPort(port);
+                ((UDPClient) udpClient).setDestinationAddress(ipAddress);
+                ((UDPClient) udpClient).setDestinationPort(port);
                 udpClient.send(joinMessage);
 
             } catch (UnknownHostException e) {
@@ -274,41 +265,57 @@ public class Node{
 
     }
 
-	public void printRoutingTable() {
-		System.out.println("Routing table entries");
+    public void printRoutingTable() {
+        System.out.println("Routing table entries");
 
-		if (routingTable.size() == 0){
-			System.out.println("No entries present");
-			return;
-		}
-		for (RoutingTableEntry entry: routingTable){
-			System.out.println(entry);
-		}
-	}
+        if (routingTable.size() == 0) {
+            System.out.println("No entries present");
+            return;
+        }
+        for (RoutingTableEntry entry : routingTable) {
+            System.out.println(entry);
+        }
+    }
 
     private String search(String searchMessage) {
 
         //search in the the own file list
         //search message format - length SER IP port file_name hops
-        List<String> filesFound  = new ArrayList<>();
+        Set<String> filesFound = new HashSet<>();
 
-        String ipAddressSM = searchMessage.split(" ")[2];
-        String portSM = searchMessage.split(" ")[3];
-        String fileNameSM = searchMessage.split(" ")[4];
-        int hopsSM = Integer.parseInt(searchMessage.split(" ")[5]);
+        String[] searchMessageComponents = searchMessage.split(" ");
 
-        String outputMessage = null;
+        String ipAddressSM = searchMessageComponents[2];
+        String portSM = searchMessageComponents[3];
+        String fileNameSM = searchMessageComponents[4];
 
-        for(String fileName : files){
-            if(fileName.matches("(.*)"+fileNameSM+"(.*)")){
-                filesFound.add(fileName);
+        if (searchMessageComponents.length > 6) {
+            for (int i = 5; i < searchMessageComponents.length - 1; i++) {
+                fileNameSM += " " + searchMessageComponents[i];
             }
         }
 
-        if(filesFound.isEmpty()) {
+        int hopsSM = Integer.parseInt(searchMessage.split(" ")[searchMessageComponents.length - 1]);
+
+        String[] tokens = fileNameSM.split(" ");
+
+        String outputMessage = null;
+
+
+        for (String fileName : files) {
+            List<String> fileNameTokens = Arrays.asList(fileName.split(" "));
+            for(String token: tokens){
+                if(fileNameTokens.contains(token)){
+                    filesFound.add(fileName);
+                    break;
+                }
+            }
+        }
+
+        if (filesFound.isEmpty()) {
             hopsSM++;
 
-            searchMessage = this.createSearchMessage(hopsSM,fileNameSM,ipAddressSM,portSM);
+            searchMessage = this.createSearchMessage(hopsSM, fileNameSM, ipAddressSM, portSM);
             // iterate through the routing list and send UDP SER message
             for (RoutingTableEntry entry : routingTable) {
                 try {
@@ -326,16 +333,16 @@ public class Node{
                     System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
                 }
             }
-        }else if(hopsSM != 0){
-            outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(),Integer.toString(this.port),hopsSM,filesFound);
-        }else {
+        } else if (hopsSM != 0) {
+            outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound);
+        } else {
             System.out.println("File found");
         }
 
         return outputMessage;
     }
 
-    private String createSearchMessage(int hops, String fileName, String ipAddress, String port){
+    private String createSearchMessage(int hops, String fileName, String ipAddress, String port) {
 
         //SER message format - length SER IP port file_name hops
         String searchMessage = new MessageBuilder().append(Commands.SER)
@@ -348,18 +355,18 @@ public class Node{
         return searchMessage;
     }
 
-    private String createSearchOkMessage(String ipAddress, String port, int hops,List<String> filesFound){
+    private String createSearchOkMessage(String ipAddress, String port, int hops, Set<String> filesFound) {
 
         String fileNames = "";
-        for(String file: filesFound){
-            fileNames += file+" ";
+        for (String file : filesFound) {
+            fileNames += file + " ";
         }
         //SEROK message format - length SEROK no_files IP port hops filename1 filename2 ... ...
         String searchOkMessage = new MessageBuilder().append(Commands.SEROK)
-                .append(filesFound.size()+"")
+                .append(filesFound.size() + "")
                 .append(ipAddress)
                 .append(port)
-                .append(hops+"")
+                .append(hops + "")
                 .append(fileNames)
                 .buildMessage();
 

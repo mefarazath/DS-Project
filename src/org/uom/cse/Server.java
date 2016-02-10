@@ -212,7 +212,4 @@ public class Server extends Thread {
         return true;
     }
 
-    private boolean handleSER(String[] msgParts){
-
-    }
 }
