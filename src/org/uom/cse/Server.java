@@ -12,8 +12,10 @@ public class Server extends Thread {
     private UDPClient udpClient;
     private InetAddress ipAddress;
     private int port;
+    private Node node;
 
-    public Server(InetAddress ipAddress, int port) {
+    public Server(Node node, InetAddress ipAddress, int port) {
+        this.node = node;
         this.ipAddress = ipAddress;
         this.port = port;
         this.udpClient = new UDPClient(ipAddress, port);
@@ -206,6 +208,33 @@ public class Server extends Thread {
             System.out.println("Leaving Failed");
         } else {
             return false;
+        }
+
+        return true;
+    }
+
+    private boolean handleSER(String message){
+
+        if(message.split(" ").length < 6){
+            return false;
+        }
+
+        String searchOkMessage = this.node.search(message);
+
+        if(searchOkMessage != null){
+
+            try {
+                InetAddress ipAddressSM = InetAddress.getByName(message.split(" ")[2]);
+                String portSM = message.split(" ")[3];
+
+                udpClient.setDestinationAddress(ipAddressSM);
+                udpClient.setDestinationPort(Integer.parseInt(portSM));
+
+                udpClient.send(searchOkMessage);
+
+            } catch (UnknownHostException e) {
+                return false;
+            }
         }
 
         return true;

@@ -35,8 +35,8 @@ public class Node {
     private Properties properties;
 
     private Node() {
-        routingTable = new ArrayList<RoutingTableEntry>();
-        files = new ArrayList<String>();
+        routingTable = new ArrayList<>();
+        files = new ArrayList<>();
         udpClient = new UDPClient();
         properties = loadProperties();
     }
@@ -45,8 +45,8 @@ public class Node {
         this();
         this.ipAddress = ipAddress;
         this.port = port;
-        this.server = new Server(ipAddress, port);
         properties = loadProperties();
+        this.server = new Server(this,ipAddress, port);
     }
 
     public static void main(String[] args) throws IOException {
@@ -277,7 +277,7 @@ public class Node {
         }
     }
 
-    private String search(String searchMessage) {
+    public String search(String searchMessage) {
 
         //search in the the own file list
         //search message format - length SER IP port file_name hops
@@ -375,7 +375,7 @@ public class Node {
         return searchOkMessage;
     }
 
-    private void initializeSearch(String fileName) {
+    public void initializeSearch(String fileName) {
 
         String searchMessage = this.createSearchMessage(0, fileName, this.ipAddress.getHostAddress(), Integer.toString(this.port));
         this.search(searchMessage);
