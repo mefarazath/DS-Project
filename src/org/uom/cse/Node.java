@@ -24,13 +24,17 @@ public class Node {
     private static final String REG = "REG";
     private static final String SERVER_IP = "bootstrapServerIp";
     private static final String SERVER_PORT = "bootstrapServerPort";
+    private static final String LOCAL_IP = "localIp";
     private static final String UDP = "udp";
     private static final String WEB_SERVICE = "webService";
     private static final String PROPERTIES_FILE = "config.properties";
+
     private static String bootstrapServerIp;
     private static int bootstrapServerPort;
     private static boolean udp;
     private static boolean webService;
+    private static String localIp;
+
     List<RoutingTableEntry> routingTable;
     List<String> files;
 
@@ -77,7 +81,7 @@ public class Node {
             userName = new Scanner(System.in).nextLine();
 
             try {
-                ipAddress = InetAddress.getLocalHost();
+                ipAddress = InetAddress.getByName(localIp);
                 nodePortNumber = Integer.parseInt(input.trim());
 
                 // TODO check port number
@@ -165,6 +169,7 @@ public class Node {
                     .getProperty(SERVER_PORT));
             udp = Boolean.parseBoolean(properties.getProperty(UDP));
             webService = Boolean.parseBoolean(properties.getProperty(WEB_SERVICE));
+            localIp = properties.getProperty(LOCAL_IP);
 
 
         } catch (FileNotFoundException e) {
