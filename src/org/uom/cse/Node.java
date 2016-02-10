@@ -102,6 +102,7 @@ public class Node {
 
                 // create a node
                 node = new Node(ipAddress, nodePortNumber);
+                node.loadFiles();
 
                 // register with the bootstrap server
                 isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber,userName);
