@@ -377,7 +377,7 @@ public class Node {
             temp.add(line.trim());
         }
 
-        int fileToSelect = (((int)Math.floor(Math.random()))*3)%3 + 3;
+        int fileToSelect = (((int)Math.floor(Math.random()*3))) + 3;
 
         int[] randomIndices = randomNodeIndices(temp.size(),fileToSelect);
 
