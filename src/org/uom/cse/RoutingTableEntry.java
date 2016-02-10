@@ -2,38 +2,41 @@ package org.uom.cse;
 
 public class RoutingTableEntry {
 
-	private String userName;
-	private String ipAddress;
-	private String port;
+    private String userName;
+    private String ipAddress;
+    private String port;
+    private boolean active;
 
-	public RoutingTableEntry(String userName, String ipAddress, String port) {
-		this.userName = userName;
-		this.ipAddress = ipAddress;
-		this.port = port;
-	}
+    public RoutingTableEntry(String userName, String ipAddress, String port) {
+        this.userName = userName;
+        this.ipAddress = ipAddress;
+        this.port = port;
+        this.active = false; // gets active only when the JOINOK is received
+    }
 
-	public String getUserName() {
-		return userName;
-	}
+    public String getUserName() {
+        return userName;
+    }
 
-	public String getIpAddress() {
-		return ipAddress;
-	}
+    public String getIpAddress() {
+        return ipAddress;
+    }
 
-	public String getPort() {
-		return port;
-	}
+    public String getPort() {
+        return port;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		RoutingTableEntry othroutingTableerEntry = (RoutingTableEntry) obj;
-		// check the equality of all three attributes
+    public boolean isActive(){ return active; }
 
-		return true;
-	}
+    public void setActive(boolean active){
+        this.active = active;
+    }
 
-	@Override
-	public String toString() {
-		return userName + " -> " + ipAddress + ":" + port;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        RoutingTableEntry otherEntry = (RoutingTableEntry)obj;
+        // check the equality of all three attributes
+
+        return true;
+    }
 }
