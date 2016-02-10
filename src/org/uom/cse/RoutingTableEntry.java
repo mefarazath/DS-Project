@@ -40,6 +40,14 @@ public class RoutingTableEntry {
         return true;
     }
 
+    public boolean equals(String ipAddress, String port){
+        if(ipAddress.equals(this.ipAddress) && port.equals(this.port)){
+            return true;
+        }
+
+        return false;
+    }
+
     @Override
     public String toString() {
         return ipAddress + ":" + port + "\t" + userName +"\t" + isActive;

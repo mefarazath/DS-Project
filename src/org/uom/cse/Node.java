@@ -27,8 +27,17 @@ public class Node {
     private static final String PROPERTIES_FILE = "config.properties";
     private static String bootstrapServerIp;
     private static int bootstrapServerPort;
-    List<RoutingTableEntry> routingTable;
-    List<String> files;
+    private List<RoutingTableEntry> routingTable;
+
+    public List<RoutingTableEntry> getRoutingTable() {
+        return routingTable;
+    }
+
+    public List<String> getFiles() {
+        return files;
+    }
+
+    private List<String> files;
 
     private SocketServer server;
     private UDPClient udpClient;
@@ -40,8 +49,8 @@ public class Node {
     private Properties properties;
 
     private Node() {
-        routingTable = new ArrayList<>();
-        files = new ArrayList<>();
+        routingTable = new ArrayList<RoutingTableEntry>();
+        files = new ArrayList<String>();
         properties = loadProperties();
     }
 
@@ -344,7 +353,7 @@ public class Node {
 
         //search in the the own file list
         //search message format - length SER IP port file_name hops
-        Set<String> filesFound = new HashSet<>();
+        Set<String> filesFound = new HashSet<String>();
 
         String[] searchMessageComponents = searchMessage.split(" ");
 
