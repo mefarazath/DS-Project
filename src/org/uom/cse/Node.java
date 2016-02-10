@@ -23,6 +23,11 @@ public class Node {
 
     // commands
     private static final String REGOK = "REGOK";
+
+    public void setActiveNode(boolean activeNode) {
+        isActiveNode = activeNode;
+    }
+
     private static final String REG = "REG";
     private static final String SERVER_IP = "bootstrapServerIp";
     private static final String SERVER_PORT = "bootstrapServerPort";
@@ -40,6 +45,7 @@ public class Node {
     private List<RoutingTableEntry> routingTable;
     private List<String> messageIds = new ArrayList<>();
     private Map<String, SearchQuery> sentMessages = new HashMap<>();
+    private boolean isActiveNode = false;
 
     public List<RoutingTableEntry> getRoutingTable() {
         return routingTable;
@@ -114,6 +120,7 @@ public class Node {
 
                 if (isInitialized) {
                     System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
+                    node.isActiveNode = true;
                     // start the internal server of the node to listen to messages
                     node.server.start();
                     // start the search Web Service
@@ -129,6 +136,7 @@ public class Node {
                 }
 
                 isInitialized = false;
+                node.isActiveNode = false;
             }
 
         }
@@ -237,14 +245,48 @@ public class Node {
         return success;
     }
 
-    public void deregisterFromBS(InetAddress bsAddress, int port, String username) throws IOException {
-        String deregMessage = new MessageBuilder().append(Commands.UNREG)
-                .append(bsAddress.getHostAddress())
-                .append(port + "")
-                .append(username)
-                .buildMessage();
+    public void deregisterFromBS(InetAddress bsAddress, int bsPort, String username) throws IOException {
 
-        sendMessageToBS(deregMessage);
+        if (this.isActiveNode){
+            String deregMessage = new MessageBuilder().append(Commands.UNREG)
+                    .append(bsAddress.getHostAddress())
+                    .append(bsPort + "")
+                    .append(username)
+                    .buildMessage();
+
+            String leaveMessage = new MessageBuilder().append(Commands.LEAVE)
+                    .append(ipAddress.getHostAddress())
+                    .append(this.port + "")
+                    .buildMessage();
+
+
+            //send leave message to each neighbour
+            for (RoutingTableEntry routingTableEntry : routingTable) {
+
+                if (routingTableEntry.isActive()) {
+                    String neighborIP = routingTableEntry.getIpAddress();
+                    int neighborPort = Integer.parseInt(routingTableEntry.getPort());
+
+                    udpClient.send(neighborIP, neighborPort, leaveMessage );
+
+                }
+            }
+
+            // send the deregistration message to BS
+            String serverResponse = sendMessageToBS(deregMessage);
+            String[] parts = serverResponse.split("\\s+");
+            if ("0".equals(parts[parts.length-1])) {
+                this.setActiveNode(false);
+            } else {
+                System.err.println("IP and port may not be in the registry or command is incorrect");
+            }
+
+        } else {
+            System.out.println("Node is not connected or already deregisterd");
+        }
+
+
+
     }
 
     private String createRegMessage(String ipAddress, int port, String userName) {
@@ -367,7 +409,9 @@ public class Node {
 
         int count = 0;
         for (RoutingTableEntry entry : routingTable) {
-            System.out.println((++count) + "\t" + entry);
+            if (entry.isActive()) {
+                System.out.println((++count) + "\t" + entry);
+            }
         }
         System.out.println();
     }

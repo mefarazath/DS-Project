@@ -9,6 +9,7 @@ public class Commands {
     public static final String REG = "REG";
 
     public static final String UNREG = "UNREG";
+    public static final String UNROK = "UNROK";
 
     public static final String JOIN = "JOIN";
     public static final String JOINOK = "JOINOK";
