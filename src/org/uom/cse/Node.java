@@ -71,6 +71,7 @@ public class Node {
         int nodePortNumber = 0;
         String userName = "";
 
+        loadProperties();
         String input;
         Node node = null;
         while (!isInitialized) {
@@ -84,7 +85,9 @@ public class Node {
                 ipAddress = InetAddress.getByName(localIp);
                 nodePortNumber = Integer.parseInt(input.trim());
 
-                // TODO check port number
+                if((nodePortNumber < 1000 || nodePortNumber > 65535)){
+                    throw new Exception("Invalid port number");
+                }
 
                 // create a node
                 node = new Node(ipAddress, nodePortNumber);
@@ -159,7 +162,7 @@ public class Node {
         System.exit(0);
     }
 
-    private Properties loadProperties() {
+    public static Properties loadProperties() {
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream(PROPERTIES_FILE));
