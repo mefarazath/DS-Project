@@ -101,9 +101,13 @@ public class SocketServer extends Thread {
 
             case Commands.SER:
 
+                if (!this.handleSER(message)) {
+                    System.err.println("Message error : " + message);
+                }
                 break;
 
             case Commands.SEROK:
+                System.out.println("Search Successful in "+ msgParts[msgParts.length -1]);
                 break;
 
             case Commands.LEAVE:
@@ -130,11 +134,6 @@ public class SocketServer extends Thread {
             default:
                 System.err.println("Message error : invalid command");
         }
-
-        // select which handle method to call here.
-        // TODO based on the message write seperate handle message
-        // eg : for a JOIN message send a JOINOK etc.
-
 
     }
 
@@ -171,7 +170,7 @@ public class SocketServer extends Thread {
                     .append(successCode)
                     .buildMessage();
 
-            InetAddress ipAddress = InetAddress.getByName(msgParts[2]);
+            String ipAddress = msgParts[2];
             int port = Integer.parseInt(msgParts[3]);
 
             udpClient.send(ipAddress, port, joinOkMessage);
@@ -217,7 +216,7 @@ public class SocketServer extends Thread {
         }
 
         try {
-            InetAddress ipAddress = InetAddress.getByName(msgParts[2]);
+            String ipAddress = msgParts[2];
             int port = Integer.parseInt(msgParts[3]);
 
             //create LEAVEOK message
@@ -257,21 +256,7 @@ public class SocketServer extends Thread {
             return false;
         }
 
-        String searchOkMessage = this.node.search(message);
-
-        if(searchOkMessage != null){
-
-            try {
-                InetAddress ipAddressSM = InetAddress.getByName(message.split(" ")[2]);
-                int portSM = Integer.parseInt(message.split(" ")[3]);
-
-
-                udpClient.send(ipAddressSM, portSM, searchOkMessage);
-
-            } catch (UnknownHostException e) {
-                return false;
-            }
-        }
+        this.node.search(message);
 
         return true;
     }

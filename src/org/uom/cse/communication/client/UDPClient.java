@@ -46,8 +46,9 @@ public class UDPClient{
     }
 
 
-    public void send(InetAddress ipAddress, int port, String message) {
+    public void send(String ipAddress, int port, String message) throws UnknownHostException {
         // send the message here
-        sendMessage(ipAddress, port, message);
+
+        sendMessage(InetAddress.getByName(ipAddress), port, message);
     }
 }
