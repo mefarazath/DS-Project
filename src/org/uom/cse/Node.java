@@ -379,7 +379,7 @@ public class Node {
 
         int fileToSelect = (((int)Math.floor(Math.random()*3))) + 3;
 
-        int[] randomIndices = randomNodeIndices(temp.size(),fileToSelect);
+        int[] randomIndices = randomNodeIndices(temp.size()-1,fileToSelect);
 
         for (int i : randomIndices) {
             fileList.add(temp.get(i));
