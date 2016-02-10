@@ -12,7 +12,7 @@ import java.net.UnknownHostException;
 
 public class SocketServer extends Thread {
     private static final int size = 65553;
-    private static final String ERROR = "ERROR";
+   // private static final String ERROR = "ERROR";
 
     private UDPClient udpClient;
     private InetAddress ipAddress;
@@ -114,14 +114,14 @@ public class SocketServer extends Thread {
                 break;
 
             case Commands.LEAVEOK:
-                //length LEAVE IP_address port_no
+                //length LEAVEOK value
                 if(!this.handleLEAVEOK(msgParts)){
                     System.err.println("Message error : " + message);
                 }
                 break;
 
             case Commands.ERROR:
-                //length LEAVE IP_address port_no
+                //length ERROR
                 if(!this.handleERROR(msgParts)){
                     System.err.println("Message error : " + message);
                 }
@@ -139,6 +139,11 @@ public class SocketServer extends Thread {
     }
 
     protected String updateRoutingTable(String ipAddress, String port, boolean active) {
+        List<RoutingTableEntry> routingTableEntryList = this.node.getRoutingTable();
+
+        for(int i=0; i<routingTableEntryList.size;i++){
+            
+        }
         //add to the routing table if it is not already in the table
         //return SUCCESS_CODE or ERROR_CODE
 
@@ -146,6 +151,13 @@ public class SocketServer extends Thread {
     }
 
     protected boolean handleERROR(String[] msgPatrs){
+        //length ERROR
+        System.out.println("Error message.");
+
+        if(msgPatrs.length != 2){
+            return false;
+        }
+
         return true;
     }
 

@@ -26,8 +26,17 @@ public class Node {
     private static final String PROPERTIES_FILE = "config.properties";
     private static String bootstrapServerIp;
     private static int bootstrapServerPort;
-    List<RoutingTableEntry> routingTable;
-    List<String> files;
+    private List<RoutingTableEntry> routingTable;
+
+    public List<RoutingTableEntry> getRoutingTable() {
+        return routingTable;
+    }
+
+    public List<String> getFiles() {
+        return files;
+    }
+
+    private List<String> files;
 
     private SocketServer server;
     private UDPClient udpClient;
