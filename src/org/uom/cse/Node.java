@@ -19,12 +19,14 @@ public class Node {
     private static final String LOCALHOST = "localhost";
     private static final String QUIT = "q";
     private static final int JOINING_NODES_COUNT = 2;
+
     // commands
     private static final String REGOK = "REGOK";
     private static final String REG = "REG";
     private static final String SERVER_IP = "bootstrapServerIp";
     private static final String SERVER_PORT = "bootstrapServerPort";
     private static final String LOCAL_IP = "localIp";
+    private static final String FILENAME = "fileName";
     private static final String UDP = "udp";
     private static final String WEB_SERVICE = "webService";
     private static final String PROPERTIES_FILE = "config.properties";
@@ -34,6 +36,7 @@ public class Node {
     private static boolean udp;
     private static boolean webService;
     private static String localIp;
+    private static String fileName;
 
     List<RoutingTableEntry> routingTable;
     List<String> files;
@@ -50,14 +53,12 @@ public class Node {
     private Node() {
         routingTable = new ArrayList<>();
         files = new ArrayList<>();
-        properties = loadProperties();
     }
 
     public Node(InetAddress ipAddress, int port) {
         this();
         this.ipAddress = ipAddress;
         this.port = port;
-        properties = loadProperties();
         this.udpClient = new UDPClient(ipAddress, port);
         this.server = new SocketServer(this, ipAddress, port);
     }
@@ -72,6 +73,7 @@ public class Node {
         String userName = "";
 
         loadProperties();
+
         String input;
         Node node = null;
         while (!isInitialized) {
@@ -173,6 +175,7 @@ public class Node {
             udp = Boolean.parseBoolean(properties.getProperty(UDP));
             webService = Boolean.parseBoolean(properties.getProperty(WEB_SERVICE));
             localIp = properties.getProperty(LOCAL_IP);
+            fileName = properties.getProperty(FILENAME);
 
 
         } catch (FileNotFoundException e) {
@@ -352,6 +355,18 @@ public class Node {
             System.out.println( (++count) + "\t" +entry);
         }
         System.out.println();
+    }
+
+    public void loadFiles() throws IOException {
+
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
+
+        String line;
+        while ( (line = bufferedReader.readLine()) != null) {
+
+        }
+
+
     }
 
     public void search(String searchMessage) {
