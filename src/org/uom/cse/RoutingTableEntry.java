@@ -32,13 +32,13 @@ public class RoutingTableEntry {
         this.isActive = active;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        RoutingTableEntry otherEntry = (RoutingTableEntry)obj;
-        // check the equality of all three attributes
+    public boolean equals(String ipAddress, String port){
+        if(ipAddress.equals(this.ipAddress) && port.equals(this.port)){
+            return true;
+            }
 
-        return true;
-    }
+                return false;
+        }
 
     @Override
     public String toString() {
