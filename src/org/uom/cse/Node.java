@@ -35,8 +35,17 @@ public class Node {
     private static boolean webService;
     private static String localIp;
 
-    List<RoutingTableEntry> routingTable;
-    List<String> files;
+    private List<RoutingTableEntry> routingTable;
+
+    public List<RoutingTableEntry> getRoutingTable() {
+        return routingTable;
+    }
+
+    public List<String> getFiles() {
+            return files;
+    }
+
+    private List<String> files;
 
     private SocketServer server;
     private UDPClient udpClient;

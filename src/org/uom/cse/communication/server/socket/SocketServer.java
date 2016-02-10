@@ -2,6 +2,7 @@ package org.uom.cse.communication.server.socket;
 
 import org.uom.cse.Commands;
 import org.uom.cse.Node;
+import org.uom.cse.RoutingTableEntry;
 import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.message.MessageBuilder;
 
@@ -9,6 +10,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 
 public class SocketServer extends Thread {
     private static final int size = 65553;
@@ -41,16 +43,13 @@ public class SocketServer extends Thread {
 
         }
 
-        // call the handleMessage() from here
-        // handle according to the method --> ie. send appropriate responses.
-
     }
 
     public String receive() {
         DatagramSocket clientSocket = null;
-        String outputMessage = ERROR;
+        String outputMessage = Commands.ERROR;
         try {
-            if (this.port == 0){
+            if (this.port == 0) {
                 clientSocket = new DatagramSocket();
             } else {
                 clientSocket = new DatagramSocket(this.port, ipAddress);
@@ -61,13 +60,13 @@ public class SocketServer extends Thread {
             // receive data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             clientSocket.receive(receivePacket);
-            System.out.println(receivePacket.getAddress()+" "+receivePacket.getPort());
+            System.out.println(receivePacket.getAddress() + " " + receivePacket.getPort());
 
             // output the received bytes as a string
             outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
             //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (clientSocket != null) {
@@ -84,7 +83,7 @@ public class SocketServer extends Thread {
 
         String messageCode = msgParts[1];
 
-        switch (messageCode){
+        switch (messageCode) {
             case Commands.JOIN:
                 //length JOIN IP_address port_no
                 if (!this.handleJOIN(msgParts)) {
@@ -107,26 +106,26 @@ public class SocketServer extends Thread {
                 break;
 
             case Commands.SEROK:
-                System.out.println("Search Successful in "+ msgParts[msgParts.length -1]);
+                System.out.println("Search Successful in " + msgParts[msgParts.length - 1]);
                 break;
 
             case Commands.LEAVE:
                 //length LEAVE IP_address port_no
-                if(!this.handleLEAVE(msgParts)){
+                if (!this.handleLEAVE(msgParts)) {
                     System.err.println("Message error : " + message);
                 }
                 break;
 
             case Commands.LEAVEOK:
                 //length LEAVE IP_address port_no
-                if(!this.handleLEAVEOK(msgParts)){
+                if (!this.handleLEAVEOK(msgParts)) {
                     System.err.println("Message error : " + message);
                 }
                 break;
 
             case Commands.ERROR:
                 //length LEAVE IP_address port_no
-                if(!this.handleERROR(msgParts)){
+                if (!this.handleERROR(msgParts)) {
                     System.err.println("Message error : " + message);
                 }
                 break;
@@ -141,10 +140,35 @@ public class SocketServer extends Thread {
         //add to the routing table if it is not already in the table
         //return SUCCESS_CODE or ERROR_CODE
 
-        return Commands.SUCCESS_CODE;
+        List<RoutingTableEntry> routingTableEntryList = this.node.getRoutingTable();
+        RoutingTableEntry routingTableEntry;
+
+        for (int i = 0; i < routingTableEntryList.size(); i++) {
+            routingTableEntry = routingTableEntryList.get(i);
+            if (routingTableEntry.equals(ipAddress, port)) {
+                routingTableEntry.setActive(active);
+                return Commands.SUCCESS_CODE;
+            }
+        }
+
+        try {
+            RoutingTableEntry routingTableEntry1 = new RoutingTableEntry("", ipAddress, port);
+            routingTableEntryList.add(routingTableEntry1);
+            return Commands.SUCCESS_CODE;
+
+        } catch (Exception e) {
+            return Commands.ERROR_CODE;
+        }
     }
 
-    protected boolean handleERROR(String[] msgPatrs){
+    protected boolean handleERROR(String[] msgPatrs) {
+
+        //length ERROR
+        System.out.println("Error message.");
+
+        if (msgPatrs.length != 2) {
+            return false;
+        }
         return true;
     }
 
@@ -158,7 +182,7 @@ public class SocketServer extends Thread {
 
         String successCode = updateRoutingTable(msgParts[2], msgParts[3], true);
 
-        if(successCode.equals(Commands.ERROR_CODE)){
+        if (successCode.equals(Commands.ERROR_CODE)) {
             //inactivate the node that returns errors in updating the routing table
             this.updateRoutingTable(msgParts[2], msgParts[3], false);
         }
@@ -199,19 +223,19 @@ public class SocketServer extends Thread {
         return true;
     }
 
-    protected boolean handleLEAVE(String[] msgParts){
+    protected boolean handleLEAVE(String[] msgParts) {
         //length LEAVE IP_address port_no
-        if(msgParts.length != 4){
+        if (msgParts.length != 4) {
             return false;
         }
 
         String successCode = this.updateRoutingTable(msgParts[2], msgParts[3], false);
 
-        if (successCode.equals(Commands.SUCCESS_CODE)){
+        if (successCode.equals(Commands.SUCCESS_CODE)) {
             System.out.println("Updated Successfully : " + Commands.LEAVE + " " + msgParts[2] + " " + msgParts[3]);
-        }else if(successCode.equals(Commands.ERROR_CODE)){
+        } else if (successCode.equals(Commands.ERROR_CODE)) {
             System.out.println("Update Failed : " + Commands.LEAVE + " " + msgParts[2] + " " + msgParts[3]);
-        }else{
+        } else {
             return false;
         }
 
@@ -233,9 +257,9 @@ public class SocketServer extends Thread {
         return true;
     }
 
-    protected boolean handleLEAVEOK(String[] msgParts){
+    protected boolean handleLEAVEOK(String[] msgParts) {
         //length LEAVEOK value
-        if(msgParts.length != 3){
+        if (msgParts.length != 3) {
             return false;
         }
 
@@ -250,9 +274,9 @@ public class SocketServer extends Thread {
         return true;
     }
 
-    private boolean handleSER(String message){
+    private boolean handleSER(String message) {
 
-        if(message.split(" ").length < 6){
+        if (message.split(" ").length < 6) {
             return false;
         }
 
