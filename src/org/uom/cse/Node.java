@@ -159,7 +159,7 @@ public class Node {
                 case "4" :
                     System.out.println("Enter File name to search for : ");
                     String fileName = scanner.nextLine();
-                    node.search(fileName);
+                    node.initializeSearch(fileName);
                     break;
 
                 case QUIT :
@@ -395,6 +395,7 @@ public class Node {
         for(String fileName : fileList) {
             System.out.println((++count) + ".\t" + fileName);
         }
+        System.out.println();
     }
 
 
