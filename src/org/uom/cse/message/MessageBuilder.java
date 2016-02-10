@@ -1,11 +1,11 @@
 package org.uom.cse.message;
 
-public class MessageBuilder{
+public class MessageBuilder {
 
     private static final String zeros = "0000";
     private StringBuilder builder;
 
-    public MessageBuilder(){
+    public MessageBuilder() {
         builder = new StringBuilder();
     }
 
@@ -14,14 +14,14 @@ public class MessageBuilder{
         return this;
     }
 
-    public String buildMessage(){
+    public String buildMessage() {
         String msg = builder.toString().trim();
 
         // number of zeros to append
         int numZeros = 4 - (msg.length() + "").length();
         int totalMessageLength = msg.length() + 5;
 
-        msg = zeros.substring(0,numZeros) + totalMessageLength + " " + msg;
+        msg = zeros.substring(0, numZeros) + totalMessageLength + " " + msg;
         return msg;
     }
 }

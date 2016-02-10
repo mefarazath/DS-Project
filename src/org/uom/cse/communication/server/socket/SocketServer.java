@@ -62,7 +62,7 @@ public class SocketServer extends Thread {
             // receive data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             clientSocket.receive(receivePacket);
-        //    System.out.println(receivePacket.getAddress() + " " + receivePacket.getPort());
+            //    System.out.println(receivePacket.getAddress() + " " + receivePacket.getPort());
 
             // output the received bytes as a string
             outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
@@ -290,7 +290,7 @@ public class SocketServer extends Thread {
         return true;
     }
 
-    private boolean handleSEROK(String message){
+    private boolean handleSEROK(String message) {
 
         String[] messageComponents = message.split(" ");
 
@@ -300,7 +300,7 @@ public class SocketServer extends Thread {
         String hops = messageComponents[5];
 
         System.out.println(message);
-        System.out.println("Search successful for query : \""+searchQuery.getSearchQuery()+"\" in "+latency+" ms and in "+hops+" hops");
+        System.out.println("Search successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops");
 
         return true;
 

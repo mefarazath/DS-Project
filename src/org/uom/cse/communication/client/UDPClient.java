@@ -1,9 +1,12 @@
 package org.uom.cse.communication.client;
 
 
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-public class UDPClient{
+public class UDPClient {
 
     // own ip-address and port
     private InetAddress ipAddress;
@@ -17,16 +20,17 @@ public class UDPClient{
 
     /**
      * Method to send a message to another node via UDP
+     *
      * @param message   String : message to be sent
      * @param ipAddress
      * @param port
      */
-    private void sendMessage( InetAddress ipAddress, int port, String message){
+    private void sendMessage(InetAddress ipAddress, int port, String message) {
 
         DatagramSocket clientSocket = null;
         try {
             clientSocket = new DatagramSocket(null);
-           // clientSocket.bind(new InetSocketAddress(this.ipAddress, this.port));
+            // clientSocket.bind(new InetSocketAddress(this.ipAddress, this.port));
 
             byte[] messageToSend = message.getBytes();
             int messageLength = messageToSend.length;
@@ -34,12 +38,12 @@ public class UDPClient{
             // send data
             DatagramPacket sendPacket = new DatagramPacket(messageToSend, messageLength, ipAddress, port);
             clientSocket.send(sendPacket);
-            System.out.println(message+"\t --> "+ipAddress+":"+port);
+            System.out.println(message + "\t --> " + ipAddress + ":" + port);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if ( clientSocket != null) {
+            if (clientSocket != null) {
                 clientSocket.close();
             }
         }

@@ -26,22 +26,24 @@ public class RoutingTableEntry {
         return port;
     }
 
-    public boolean isActive(){ return isActive; }
+    public boolean isActive() {
+        return isActive;
+    }
 
-    public void setActive(boolean active){
+    public void setActive(boolean active) {
         this.isActive = active;
     }
 
-    public boolean equals(String ipAddress, String port){
-        if(ipAddress.equals(this.ipAddress) && port.equals(this.port)){
+    public boolean equals(String ipAddress, String port) {
+        if (ipAddress.equals(this.ipAddress) && port.equals(this.port)) {
             return true;
-            }
-
-                return false;
         }
+
+        return false;
+    }
 
     @Override
     public String toString() {
-        return ipAddress + ":" + port + "\t" + userName +"\t" + isActive;
+        return ipAddress + ":" + port + "\t" + userName + "\t" + isActive;
     }
 }

@@ -8,7 +8,7 @@ public class SearchQuery {
     private String searchQuery;
     private Long searchTime;
 
-    public SearchQuery(String searchQuery,Long searchTime) {
+    public SearchQuery(String searchQuery, Long searchTime) {
         this.searchQuery = searchQuery;
         this.searchTime = searchTime;
     }

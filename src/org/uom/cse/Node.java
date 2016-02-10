@@ -12,7 +12,6 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.Time;
 import java.util.*;
 
 
@@ -47,10 +46,10 @@ public class Node {
     }
 
     public List<String> getFileList() {
-            return fileList;
+        return fileList;
     }
 
-    public Map<String, SearchQuery> getSentMessages(){
+    public Map<String, SearchQuery> getSentMessages() {
         return sentMessages;
     }
 
@@ -102,7 +101,7 @@ public class Node {
                 ipAddress = InetAddress.getByName(localIp);
                 nodePortNumber = Integer.parseInt(input.trim());
 
-                if((nodePortNumber < 1000 || nodePortNumber > 65535)){
+                if ((nodePortNumber < 1000 || nodePortNumber > 65535)) {
                     throw new Exception("Invalid port number");
                 }
 
@@ -111,7 +110,7 @@ public class Node {
                 node.loadFiles();
 
                 // register with the bootstrap server
-                isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber,userName);
+                isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber, userName);
 
                 if (isInitialized) {
                     System.out.println("Node " + ipAddress.getHostAddress() + ":" + nodePortNumber + " registered successfully");
@@ -122,11 +121,11 @@ public class Node {
                 }
 
             } catch (Exception ex) {
-                System.err.println("Unable to initialize the node "+ex.getMessage());
+                System.err.println("Unable to initialize the node " + ex.getMessage());
 
                 if (isInitialized) {
                     // need to deregister from the BS
-                    node.deregisterFromBS(ipAddress,nodePortNumber,userName);
+                    node.deregisterFromBS(ipAddress, nodePortNumber, userName);
                 }
 
                 isInitialized = false;
@@ -140,7 +139,7 @@ public class Node {
         System.out.println("\n\n");
         String choice = "";
 
-        while (!choice.equalsIgnoreCase(QUIT)){
+        while (!choice.equalsIgnoreCase(QUIT)) {
             System.out.println();
             System.out.println("1. Print File List");
             System.out.println("2. Print Routing Table");
@@ -150,28 +149,28 @@ public class Node {
 
             choice = scanner.nextLine();
 
-            switch (choice.toLowerCase()){
-                case "1" :
+            switch (choice.toLowerCase()) {
+                case "1":
                     node.printFiles();
                     break;
 
-                case "2" :
+                case "2":
                     node.printRoutingTable();
                     break;
 
-                case "3" :
-                    node.deregisterFromBS(ipAddress,nodePortNumber,userName);
+                case "3":
+                    node.deregisterFromBS(ipAddress, nodePortNumber, userName);
                     break;
 
-                case "4" :
+                case "4":
                     System.out.println("Enter File name to search for : ");
                     String fileName = scanner.nextLine();
                     node.initializeSearch(fileName);
                     break;
 
-                case QUIT :
+                case QUIT:
                     System.out.println("Deregistering from the BS");
-                    node.deregisterFromBS(ipAddress,nodePortNumber,userName);
+                    node.deregisterFromBS(ipAddress, nodePortNumber, userName);
                     break;
 
                 default:
@@ -224,7 +223,7 @@ public class Node {
         return serverResponse;
     }
 
-    public boolean registerToBootstrapServer(String ipAddress, int port,String userName) throws IOException {
+    public boolean registerToBootstrapServer(String ipAddress, int port, String userName) throws IOException {
         // send REG message to the bootstrap server
 
 
@@ -295,7 +294,7 @@ public class Node {
                         }
                     } else {
 
-                        int randIndex[] = randomNodeIndices(noOfNodes,JOINING_NODES_COUNT);
+                        int randIndex[] = randomNodeIndices(noOfNodes, JOINING_NODES_COUNT);
 
                         for (int i = 0; i < JOINING_NODES_COUNT; i++) {
                             int index = 3 * randIndex[i];
@@ -368,7 +367,7 @@ public class Node {
 
         int count = 0;
         for (RoutingTableEntry entry : routingTable) {
-            System.out.println( (++count) + "\t" +entry);
+            System.out.println((++count) + "\t" + entry);
         }
         System.out.println();
     }
@@ -379,11 +378,11 @@ public class Node {
         List<String> temp = new ArrayList<>();
 
         String line;
-        while ( (line = bufferedReader.readLine()) != null) {
+        while ((line = bufferedReader.readLine()) != null) {
             temp.add(line.trim());
         }
 
-        int fileToSelect = (((int)Math.floor(Math.random()*3))) + 3;
+        int fileToSelect = (((int) Math.floor(Math.random() * 3))) + 3;
 
         int[] randomIndices = randomNodeIndices(temp.size() - 1, fileToSelect);
 
@@ -394,11 +393,11 @@ public class Node {
         System.out.println(fileToSelect + "files loaded");
     }
 
-    public void printFiles(){
+    public void printFiles() {
 
         System.out.println("\nFile List");
         int count = 0;
-        for(String fileName : fileList) {
+        for (String fileName : fileList) {
             System.out.println((++count) + ".\t" + fileName);
         }
         System.out.println();
@@ -413,9 +412,9 @@ public class Node {
 
         String[] searchMessageComponents = searchMessage.split(" ");
 
-        String id = searchMessageComponents[searchMessageComponents.length-1];
+        String id = searchMessageComponents[searchMessageComponents.length - 1];
 
-        if(!messageIds.contains(id)) {
+        if (!messageIds.contains(id)) {
 
             messageIds.add(id);
 
@@ -451,12 +450,12 @@ public class Node {
 
             if (filesFound.isEmpty() || hopsSM == 0) {
 
-                if(hopsSM == 0 && !filesFound.isEmpty()){
+                if (hopsSM == 0 && !filesFound.isEmpty()) {
                     String fileNames = "";
                     for (String file : filesFound) {
                         fileNames += file + " ";
                     }
-                    System.out.println("File \"" +fileNames+ "\"found locally");
+                    System.out.println("File \"" + fileNames + "\"found locally");
                 }
 
                 hopsSM++;
@@ -471,7 +470,7 @@ public class Node {
 
                             if (udp) {
                                 udpClient.send(ipAddress, port, searchMessage);
-                            } else{
+                            } else {
                                 webServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
                             }
 
@@ -489,7 +488,7 @@ public class Node {
                 try {
                     if (udp) {
                         udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
-                    } else{
+                    } else {
                         webServiceClient.sendSearchReply(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     }
                 } catch (Exception e) {
@@ -503,8 +502,8 @@ public class Node {
     private String createSearchMessage(int hops, String fileName, String ipAddress, String port, String id) {
 
         String hashCode = id;
-        if(hops == 0){
-            String idString = System.currentTimeMillis()+ipAddress+port+fileName;
+        if (hops == 0) {
+            String idString = System.currentTimeMillis() + ipAddress + port + fileName;
             hashCode = Integer.toString(idString.hashCode());
         }
 
@@ -517,8 +516,8 @@ public class Node {
                 .append(hashCode)
                 .buildMessage();
 
-        SearchQuery searchQuery = new SearchQuery(fileName,System.currentTimeMillis());
-        this.sentMessages.put(hashCode,searchQuery);
+        SearchQuery searchQuery = new SearchQuery(fileName, System.currentTimeMillis());
+        this.sentMessages.put(hashCode, searchQuery);
 
         return searchMessage;
     }
@@ -544,7 +543,7 @@ public class Node {
 
     public void initializeSearch(String fileName) {
 
-        String searchMessage = this.createSearchMessage(0, fileName, this.ipAddress.getHostAddress(), Integer.toString(this.port),"");
+        String searchMessage = this.createSearchMessage(0, fileName, this.ipAddress.getHostAddress(), Integer.toString(this.port), "");
         this.search(searchMessage);
 
     }
