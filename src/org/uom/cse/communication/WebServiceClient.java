@@ -1,5 +1,7 @@
 package org.uom.cse.communication;
 
+import org.uom.cse.communication.client.CommunicationClient;
+
 public class WebServiceClient implements CommunicationClient {
 
 

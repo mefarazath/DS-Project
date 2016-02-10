@@ -1,8 +1,10 @@
-package org.uom.cse.communication;
+package org.uom.cse.communication.client;
+
+import org.uom.cse.communication.client.CommunicationClient;
 
 import java.net.*;
 
-public class UDPClient implements CommunicationClient{
+public class UDPClient implements CommunicationClient {
     private static final int size = 65553;
 
     // own ip-address and port

@@ -1,12 +1,11 @@
 package org.uom.cse;
 
-import org.uom.cse.communication.UDPClient;
+import org.uom.cse.Commands;
+import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.message.MessageBuilder;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Server extends Thread {
 
@@ -100,18 +99,18 @@ public class Server extends Thread {
 
     }
 
-    private String updateRoutingTable(String ipAddress, String port, boolean active) {
+    protected String updateRoutingTable(String ipAddress, String port, boolean active) {
         //add to the routing table if it is not already in the table
         //return SUCCESS_CODE or ERROR_CODE
 
         return Commands.SUCCESS_CODE;
     }
 
-    private boolean handleERROR(String[] msgPatrs){
+    protected boolean handleERROR(String[] msgPatrs){
         return true;
     }
 
-    private boolean handleJOIN(String[] msgParts) {
+    protected boolean handleJOIN(String[] msgParts) {
         //length JOIN IP_address port_no
         System.out.println("Joining :" + msgParts[2] + " " + msgParts[3]);
 
@@ -144,7 +143,7 @@ public class Server extends Thread {
         return true;
     }
 
-    private boolean handleJOINOK(String[] msgParts) {
+    protected boolean handleJOINOK(String[] msgParts) {
         //length JOINOK value
         if (msgParts.length != 3) {
             return false;
@@ -161,7 +160,7 @@ public class Server extends Thread {
         return true;
     }
 
-    private boolean handleLEAVE(String[] msgParts){
+    protected boolean handleLEAVE(String[] msgParts){
         //length LEAVE IP_address port_no
         if(msgParts.length != 4){
             return false;
@@ -195,7 +194,7 @@ public class Server extends Thread {
         return true;
     }
 
-    private boolean handleLEAVEOK(String[] msgParts){
+    protected boolean handleLEAVEOK(String[] msgParts){
         //length LEAVEOK value
         if(msgParts.length != 3){
             return false;

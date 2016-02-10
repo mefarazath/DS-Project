@@ -1,4 +1,4 @@
-package org.uom.cse.communication;
+package org.uom.cse.communication.client;
 
 public interface CommunicationClient {
 

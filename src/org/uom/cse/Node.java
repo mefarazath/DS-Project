@@ -1,7 +1,7 @@
 package org.uom.cse;
 
-import org.uom.cse.communication.CommunicationClient;
-import org.uom.cse.communication.UDPClient;
+import org.uom.cse.communication.client.CommunicationClient;
+import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.message.MessageBuilder;
 
 import java.io.*;
