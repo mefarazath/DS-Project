@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.sql.Time;
 import java.util.*;
 
 
@@ -39,6 +40,7 @@ public class Node {
     private static String fileName;
 
     private List<RoutingTableEntry> routingTable;
+    private List<String> messageIds = new ArrayList<>();
 
     public List<RoutingTableEntry> getRoutingTable() {
         return routingTable;
@@ -379,7 +381,7 @@ public class Node {
 
         int fileToSelect = (((int)Math.floor(Math.random()*3))) + 3;
 
-        int[] randomIndices = randomNodeIndices(temp.size()-1,fileToSelect);
+        int[] randomIndices = randomNodeIndices(temp.size() - 1, fileToSelect);
 
         for (int i : randomIndices) {
             fileList.add(temp.get(i));
@@ -407,75 +409,91 @@ public class Node {
 
         String[] searchMessageComponents = searchMessage.split(" ");
 
-        String ipAddressSM = searchMessageComponents[2];
-        String portSM = searchMessageComponents[3];
-        String fileNameSM = searchMessageComponents[4];
+        String id = searchMessageComponents[searchMessageComponents.length-1];
 
-        if (searchMessageComponents.length > 6) {
-            for (int i = 5; i < searchMessageComponents.length - 1; i++) {
-                fileNameSM += " " + searchMessageComponents[i];
-            }
-        }
+        if(!messageIds.contains(id)) {
 
-        int hopsSM = Integer.parseInt(searchMessage.split(" ")[searchMessageComponents.length - 1]);
+            messageIds.add(id);
 
-        String[] tokens = fileNameSM.split(" ");
-
-        String outputMessage = null;
+            String ipAddressSM = searchMessageComponents[2];
+            String portSM = searchMessageComponents[3];
+            String fileNameSM = searchMessageComponents[4];
 
 
-        for (String fileName : fileList) {
-            List<String> fileNameTokens = Arrays.asList(fileName.split(" "));
-            for (String token : tokens) {
-                if (fileNameTokens.contains(token)) {
-                    filesFound.add(fileName);
-                    break;
+            if (searchMessageComponents.length > 6) {
+                for (int i = 5; i < searchMessageComponents.length - 1; i++) {
+                    fileNameSM += " " + searchMessageComponents[i];
                 }
             }
-        }
 
-        if (filesFound.isEmpty()) {
-            hopsSM++;
+            int hopsSM = Integer.parseInt(searchMessage.split(" ")[searchMessageComponents.length - 2]);
 
-            searchMessage = this.createSearchMessage(hopsSM, fileNameSM, ipAddressSM, portSM);
-            // iterate through the routing list and send UDP SER message
-            for (RoutingTableEntry entry : routingTable) {
-                try {
-                    String ipAddress = entry.getIpAddress();
-                    int port = Integer.parseInt(entry.getPort());
+            String[] tokens = fileNameSM.split(" ");
 
-                    if (udp) {
-                        udpClient.send(ipAddress, port, searchMessage);
-                    } else if (webService) {
-                        webServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
+            String outputMessage = null;
+
+
+            for (String fileName : fileList) {
+                List<String> fileNameTokens = Arrays.asList(fileName.split(" "));
+                for (String token : tokens) {
+                    if (fileNameTokens.contains(token)) {
+                        filesFound.add(fileName);
+                        break;
                     }
+                }
+            }
 
-                    System.out.println("Search message sent to " + entry.getIpAddress() + ":" + entry.getPort());
+            if (filesFound.isEmpty()) {
+                hopsSM++;
 
+                searchMessage = this.createSearchMessage(hopsSM, fileNameSM, ipAddressSM, portSM, id);
+                // iterate through the routing list and send UDP SER message
+                for (RoutingTableEntry entry : routingTable) {
+                    if (!(entry.getIpAddress().equals(ipAddressSM) && entry.getPort().equals(portSM))) {
+                        try {
+                            String ipAddress = entry.getIpAddress();
+                            int port = Integer.parseInt(entry.getPort());
+
+                            if (udp) {
+                                udpClient.send(ipAddress, port, searchMessage);
+                            } else if (webService) {
+                                webServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
+                            }
+
+                            System.out.println("Search message sent to " + entry.getIpAddress() + ":" + entry.getPort());
+
+                        } catch (Exception e) {
+                            System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
+                        }
+                    }
+                }
+
+            } else if (hopsSM != 0) {
+                outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound);
+
+                try {
+                    if (udp) {
+                        udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
+                    } else if (webService) {
+                        webServiceClient.sendSearchQuery(ipAddressSM, Integer.parseInt(portSM), outputMessage);
+                    }
                 } catch (Exception e) {
-                    System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
+                    System.err.println("Error sending SEROK message to " + ipAddressSM + ":" + portSM);
                 }
+
+            } else {
+                System.out.println("File found");
             }
-
-        } else if (hopsSM != 0) {
-            outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound);
-
-            try {
-                if (udp) {
-                    udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
-                } else if (webService) {
-                    webServiceClient.sendSearchQuery(ipAddressSM, Integer.parseInt(portSM), outputMessage);
-                }
-            } catch (Exception e) {
-                System.err.println("Error sending SEROK message to " + ipAddressSM + ":" + portSM);
-            }
-
-        } else {
-            System.out.println("File found");
         }
     }
 
-    private String createSearchMessage(int hops, String fileName, String ipAddress, String port) {
+    private String createSearchMessage(int hops, String fileName, String ipAddress, String port, String id) {
+
+        String hashCode = id;
+        if(hops == 0){
+            String idString = System.currentTimeMillis()+ipAddress+port+fileName;
+            hashCode = Integer.toString(idString.hashCode());
+        }
 
         //SER message format - length SER IP port file_name hops
         String searchMessage = new MessageBuilder().append(Commands.SER)
@@ -483,6 +501,7 @@ public class Node {
                 .append(port)
                 .append(fileName)
                 .append(hops + "")
+                .append(hashCode)
                 .buildMessage();
 
         return searchMessage;
@@ -508,7 +527,7 @@ public class Node {
 
     public void initializeSearch(String fileName) {
 
-        String searchMessage = this.createSearchMessage(0, fileName, this.ipAddress.getHostAddress(), Integer.toString(this.port));
+        String searchMessage = this.createSearchMessage(0, fileName, this.ipAddress.getHostAddress(), Integer.toString(this.port),"");
         this.search(searchMessage);
 
     }
