@@ -30,13 +30,11 @@ public class Node {
     private static final String LOCAL_IP = "localIp";
     private static final String FILENAME = "fileName";
     private static final String UDP = "udp";
-    private static final String WEB_SERVICE = "webService";
     private static final String PROPERTIES_FILE = "config.properties";
 
     private static String bootstrapServerIp;
     private static int bootstrapServerPort;
     private static boolean udp;
-    private static boolean webService;
     private static String localIp;
     private static String fileName;
 
@@ -191,7 +189,6 @@ public class Node {
             bootstrapServerPort = Integer.parseInt(properties
                     .getProperty(SERVER_PORT));
             udp = Boolean.parseBoolean(properties.getProperty(UDP));
-            webService = Boolean.parseBoolean(properties.getProperty(WEB_SERVICE));
             localIp = properties.getProperty(LOCAL_IP);
             fileName = properties.getProperty(FILENAME);
 
@@ -471,7 +468,7 @@ public class Node {
 
                             if (udp) {
                                 udpClient.send(ipAddress, port, searchMessage);
-                            } else if (webService) {
+                            } else{
                                 webServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
                             }
 
@@ -489,7 +486,7 @@ public class Node {
                 try {
                     if (udp) {
                         udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
-                    } else if (webService) {
+                    } else{
                         webServiceClient.sendSearchQuery(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     }
                 } catch (Exception e) {
