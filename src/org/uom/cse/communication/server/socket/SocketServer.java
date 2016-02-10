@@ -39,6 +39,7 @@ public class SocketServer extends Thread {
 
             String message = receive();
             System.out.println("Received : " + message);
+            System.out.println();
 
             handleMessage(message);
 
@@ -61,7 +62,7 @@ public class SocketServer extends Thread {
             // receive data
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             clientSocket.receive(receivePacket);
-            System.out.println(receivePacket.getAddress() + " " + receivePacket.getPort());
+        //    System.out.println(receivePacket.getAddress() + " " + receivePacket.getPort());
 
             // output the received bytes as a string
             outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());

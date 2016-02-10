@@ -22,6 +22,7 @@ public class SearchServiceImpl implements SearchService {
     public void search(String searchMessage) {
         node.search(searchMessage);
         System.out.println("Search Query received : " + searchMessage);
+        System.out.println();
     }
 
     @Override
@@ -36,6 +37,7 @@ public class SearchServiceImpl implements SearchService {
 
         System.out.println(queryReply);
         System.out.println("Search successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops");
+        System.out.println();
     }
 
 }

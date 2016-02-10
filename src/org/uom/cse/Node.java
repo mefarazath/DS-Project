@@ -141,6 +141,7 @@ public class Node {
         String choice = "";
 
         while (!choice.equalsIgnoreCase(QUIT)){
+            System.out.println();
             System.out.println("1. Print File List");
             System.out.println("2. Print Routing Table");
             System.out.println("3. Unregister Node");
