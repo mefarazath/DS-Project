@@ -6,6 +6,7 @@ import org.uom.cse.communication.server.socket.SocketServer;
 import org.uom.cse.communication.server.webservice.SearchServiceImpl;
 import org.uom.cse.communication.server.webservice.SearchServicePublisher;
 import org.uom.cse.message.MessageBuilder;
+import org.uom.cse.message.SearchQuery;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -41,6 +42,7 @@ public class Node {
 
     private List<RoutingTableEntry> routingTable;
     private List<String> messageIds = new ArrayList<>();
+    private Map<String, SearchQuery> sentMessages = new HashMap<>();
 
     public List<RoutingTableEntry> getRoutingTable() {
         return routingTable;
@@ -48,6 +50,10 @@ public class Node {
 
     public List<String> getFileList() {
             return fileList;
+    }
+
+    public Map<String, SearchQuery> getSentMessages(){
+        return sentMessages;
     }
 
     private List<String> fileList;
@@ -444,6 +450,15 @@ public class Node {
             }
 
             if (filesFound.isEmpty() || hopsSM == 0) {
+
+                if(hopsSM == 0 && !filesFound.isEmpty()){
+                    String fileNames = "";
+                    for (String file : filesFound) {
+                        fileNames += file + " ";
+                    }
+                    System.out.println("File" +fileNames+ "found locally");
+                }
+
                 hopsSM++;
 
                 searchMessage = this.createSearchMessage(hopsSM, fileNameSM, ipAddressSM, portSM, id);
@@ -469,7 +484,7 @@ public class Node {
                 }
 
             } else if (hopsSM != 0) {
-                outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound);
+                outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound, id);
 
                 try {
                     if (udp) {
@@ -502,10 +517,13 @@ public class Node {
                 .append(hashCode)
                 .buildMessage();
 
+        SearchQuery searchQuery = new SearchQuery(fileName,System.currentTimeMillis());
+        this.sentMessages.put(hashCode,searchQuery);
+
         return searchMessage;
     }
 
-    private String createSearchOkMessage(String ipAddress, String port, int hops, Set<String> filesFound) {
+    private String createSearchOkMessage(String ipAddress, String port, int hops, Set<String> filesFound, String id) {
 
         String fileNames = "";
         for (String file : filesFound) {
@@ -518,6 +536,7 @@ public class Node {
                 .append(port)
                 .append(hops + "")
                 .append(fileNames)
+                .append(id)
                 .buildMessage();
 
         return searchOkMessage;

@@ -5,6 +5,7 @@ import org.uom.cse.Node;
 import org.uom.cse.RoutingTableEntry;
 import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.message.MessageBuilder;
+import org.uom.cse.message.SearchQuery;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -106,7 +107,10 @@ public class SocketServer extends Thread {
                 break;
 
             case Commands.SEROK:
-               // System.out.println("Search Successful in " + msgParts[msgParts.length - 1]);
+
+                if (!this.handleSEROK(message)) {
+                    System.err.println("Message error : " + message);
+                }
                 break;
 
             case Commands.LEAVE:
@@ -284,5 +288,22 @@ public class SocketServer extends Thread {
 
         return true;
     }
+
+    private boolean handleSEROK(String message){
+
+        String[] messageComponents = message.split(" ");
+
+        SearchQuery searchQuery = node.getSentMessages().get(messageComponents[messageComponents.length - 1]);
+
+        Long latency = System.currentTimeMillis() - searchQuery.getSearchTime();
+        String hops = messageComponents[5];
+
+        System.out.println(message);
+        System.out.println("Search successful for query : \""+searchQuery.getSearchQuery()+"\" in "+latency+" ms and in "+hops+" hops");
+
+        return true;
+
+    }
+
 
 }
