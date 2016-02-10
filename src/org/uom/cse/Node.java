@@ -453,7 +453,7 @@ public class Node {
                     for (String file : filesFound) {
                         fileNames += file + " ";
                     }
-                    System.out.println("File" +fileNames+ "found locally");
+                    System.out.println("File \"" +fileNames+ "\"found locally");
                 }
 
                 hopsSM++;

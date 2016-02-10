@@ -12,7 +12,7 @@ public class WebServiceClient{
 
     public static final String SERVICE_NAME = "searchService";
     public static final String QNAME = "http://webservice.server.communication.cse.uom.org/";
-    public static final String SERVICE_IMPL = "SearchServiceImpl" ;
+    public static final String SERVICE_IMPL = "SearchServiceImplService" ;
 
 
     public static void sendSearchQuery(String ipAddress, int port, String query) throws MalformedURLException {
