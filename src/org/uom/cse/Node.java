@@ -421,7 +421,7 @@ public class Node {
 
 
             if (searchMessageComponents.length > 6) {
-                for (int i = 5; i < searchMessageComponents.length - 1; i++) {
+                for (int i = 5; i < searchMessageComponents.length - 2; i++) {
                     fileNameSM += " " + searchMessageComponents[i];
                 }
             }
@@ -443,7 +443,7 @@ public class Node {
                 }
             }
 
-            if (filesFound.isEmpty()) {
+            if (filesFound.isEmpty() || hopsSM == 0) {
                 hopsSM++;
 
                 searchMessage = this.createSearchMessage(hopsSM, fileNameSM, ipAddressSM, portSM, id);
@@ -481,8 +481,6 @@ public class Node {
                     System.err.println("Error sending SEROK message to " + ipAddressSM + ":" + portSM);
                 }
 
-            } else {
-                System.out.println("File found");
             }
         }
     }

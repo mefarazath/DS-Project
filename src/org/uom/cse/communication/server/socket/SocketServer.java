@@ -106,7 +106,7 @@ public class SocketServer extends Thread {
                 break;
 
             case Commands.SEROK:
-                System.out.println("Search Successful in " + msgParts[msgParts.length - 1]);
+               // System.out.println("Search Successful in " + msgParts[msgParts.length - 1]);
                 break;
 
             case Commands.LEAVE:
