@@ -9,6 +9,7 @@ import org.uom.cse.message.MessageBuilder;
 import org.uom.cse.message.SearchQuery;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -226,20 +227,26 @@ public class Node {
     }
 
     public String sendMessageToBS(String msg) throws IOException {
-        // TCP send and receive
-        Socket clientSocket = new Socket(bootstrapServerIp, bootstrapServerPort);
 
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-        writer.write(msg);
-        writer.flush();
+        String serverResponse = Commands.ERROR;
+        try {
+            // TCP send and receive
+            Socket clientSocket = new Socket(bootstrapServerIp, bootstrapServerPort);
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        String serverResponse = reader.readLine();
-        System.out.println(serverResponse);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+            writer.write(msg);
+            writer.flush();
 
-        reader.close();
-        writer.close();
-        clientSocket.close();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            serverResponse = reader.readLine();
+            System.out.println(serverResponse);
+
+            reader.close();
+            writer.close();
+            clientSocket.close();
+        }catch (ConnectException ex){
+            System.err.println("Cannot connect to the BS : "+ex.getMessage());
+        }
 
         return serverResponse;
     }
@@ -250,6 +257,9 @@ public class Node {
         System.out.println(msg);
 
         String serverResponse = sendMessageToBS(msg);
+        if (serverResponse.equals(Commands.ERROR)){
+            return false;
+        }
         // handle the Registration response
         boolean success = handleRegistrationMessage(serverResponse);
         return success;
@@ -284,6 +294,11 @@ public class Node {
 
             // send the deregistration message to BS
             String serverResponse = sendMessageToBS(deregMessage);
+
+            if (serverResponse.equals(Commands.ERROR)){
+                return;
+            }
+
             String[] parts = serverResponse.split("\\s+");
             if ("0".equals(parts[parts.length - 1])) {
                 this.setActiveNode(false);
