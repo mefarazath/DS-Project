@@ -35,6 +35,7 @@ public class SocketServer extends Thread {
         while (true) {
 
             String message = receive();
+            System.out.println();
             System.out.println("Received : " + message);
             System.out.println();
 
