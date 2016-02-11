@@ -65,7 +65,7 @@ public class SocketServer extends Thread {
             //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
 
             // add network level info about the sender
-            if (outputMessage.startsWith(Commands.JOINOK)) {
+            if (outputMessage.contains(Commands.JOINOK)) {
                 outputMessage = outputMessage + " " + receivePacket.getAddress().getHostAddress() + " " + receivePacket.getPort();
             }
 
