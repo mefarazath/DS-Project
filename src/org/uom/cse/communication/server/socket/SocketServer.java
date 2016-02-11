@@ -158,6 +158,7 @@ public class SocketServer extends Thread {
 
         try {
             RoutingTableEntry routingTableEntry1 = new RoutingTableEntry("", ipAddress, port);
+            routingTableEntry1.setActive(true);
             routingTableEntryList.add(routingTableEntry1);
             return Commands.SUCCESS_CODE;
 
