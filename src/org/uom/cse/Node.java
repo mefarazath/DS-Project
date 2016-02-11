@@ -195,10 +195,10 @@ public class Node {
             bootstrapServerIp = properties.getProperty(SERVER_IP);
             bootstrapServerPort = Integer.parseInt(properties
                     .getProperty(SERVER_PORT));
-            udp = Boolean.parseBoolean(properties.getProperty(UDP));
+            udp = Boolean.parseBoolean(properties.getProperty(UDP,"false"));
             localIp = properties.getProperty(LOCAL_IP);
-            fileName = properties.getProperty(FILE_NAMES);
-            queryFile = properties.getProperty(QUERY_FILE);
+            fileName = properties.getProperty(FILE_NAMES,"files.txt");
+            queryFile = properties.getProperty(QUERY_FILE,"queries.txt");
 
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
