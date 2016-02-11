@@ -1,10 +1,7 @@
 package org.uom.cse.communication.client;
 
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 
 public class UDPClient {
 
@@ -30,7 +27,10 @@ public class UDPClient {
         DatagramSocket clientSocket = null;
         try {
             clientSocket = new DatagramSocket(null);
-            // clientSocket.bind(new InetSocketAddress(this.ipAddress, this.port));
+            clientSocket.setReuseAddress(true);
+            clientSocket.bind(new InetSocketAddress(this.ipAddress, this.port));
+
+            System.out.println(clientSocket.getLocalAddress().getHostAddress()+":"+clientSocket.getLocalPort());
 
             byte[] messageToSend = message.getBytes();
             int messageLength = messageToSend.length;
@@ -38,7 +38,7 @@ public class UDPClient {
             // send data
             DatagramPacket sendPacket = new DatagramPacket(messageToSend, messageLength, ipAddress, port);
             clientSocket.send(sendPacket);
-            System.out.println(message + "\t --> " + ipAddress + ":" + port);
+            System.out.println("\n" + message + "\t --> " + ipAddress + ":" + port);
 
         } catch (Exception e) {
             e.printStackTrace();

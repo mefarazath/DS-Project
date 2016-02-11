@@ -20,9 +20,10 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public void search(String searchMessage) {
-        node.search(searchMessage);
+        System.out.println();
         System.out.println("Search Query received : " + searchMessage);
         System.out.println();
+        node.search(searchMessage);
     }
 
     @Override

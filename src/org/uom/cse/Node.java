@@ -23,48 +23,28 @@ public class Node {
 
     // commands
     private static final String REGOK = "REGOK";
-
-    public void setActiveNode(boolean activeNode) {
-        isActiveNode = activeNode;
-    }
-
     private static final String REG = "REG";
     private static final String SERVER_IP = "bootstrapServerIp";
     private static final String SERVER_PORT = "bootstrapServerPort";
     private static final String LOCAL_IP = "localIp";
-    private static final String FILENAME = "fileName";
+    private static final String FILE_NAMES = "fileNames";
+    private static final String QUERY_FILE = "queryFile";
     private static final String UDP = "udp";
     private static final String PROPERTIES_FILE = "config.properties";
-
     private static String bootstrapServerIp;
     private static int bootstrapServerPort;
     private static boolean udp;
     private static String localIp;
     private static String fileName;
-
+    private static String queryFile;
     private List<RoutingTableEntry> routingTable;
     private List<String> messageIds = new ArrayList<>();
     private Map<String, SearchQuery> sentMessages = new HashMap<>();
     private boolean isActiveNode = false;
-
-    public List<RoutingTableEntry> getRoutingTable() {
-        return routingTable;
-    }
-
-    public List<String> getFileList() {
-        return fileList;
-    }
-
-    public Map<String, SearchQuery> getSentMessages() {
-        return sentMessages;
-    }
-
     private List<String> fileList;
-
+    private List<String> queryList;
     private SocketServer server;
     private UDPClient udpClient;
-    private WebServiceClient webServiceClient;
-
     // IP address and port of the node
     private InetAddress ipAddress;
     private int port;
@@ -73,6 +53,7 @@ public class Node {
     private Node() {
         routingTable = new ArrayList<>();
         fileList = new ArrayList<>();
+        queryList = new ArrayList<>();
     }
 
     public Node(InetAddress ipAddress, int port) {
@@ -83,7 +64,7 @@ public class Node {
         this.server = new SocketServer(this, ipAddress, port);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         boolean isInitialized = false;
         Scanner scanner = new Scanner(System.in);
@@ -114,6 +95,7 @@ public class Node {
                 // create a node
                 node = new Node(ipAddress, nodePortNumber);
                 node.loadFiles();
+                node.loadQueries();
 
                 // register with the bootstrap server
                 isInitialized = node.registerToBootstrapServer(ipAddress.getHostAddress(), nodePortNumber, userName);
@@ -132,7 +114,7 @@ public class Node {
 
                 if (isInitialized) {
                     // need to deregister from the BS
-                    node.deregisterFromBS(ipAddress, nodePortNumber, userName);
+                    node.unregisterFromBS(ipAddress, nodePortNumber, userName);
                 }
 
                 isInitialized = false;
@@ -149,11 +131,12 @@ public class Node {
 
         while (!choice.equalsIgnoreCase(QUIT)) {
             System.out.println();
-            System.out.println("1. Print File List");
-            System.out.println("2. Print Routing Table");
-            System.out.println("3. Unregister Node");
-            System.out.println("4. Search");
-            System.out.println("Please Enter your choice (Enter q to quit) :");
+            System.out.println("***1. Print File List");
+            System.out.println("***2. Print Routing Table");
+            System.out.println("***3. Unregister Node");
+            System.out.println("***4. Search Manually");
+            System.out.println("***5. Random Query Search");
+            System.out.println("***Please Enter your choice (Enter q to quit) : ");
 
             choice = scanner.nextLine();
 
@@ -167,24 +150,39 @@ public class Node {
                     break;
 
                 case "3":
-                    node.deregisterFromBS(ipAddress, nodePortNumber, userName);
+                    node.unregisterFromBS(ipAddress, nodePortNumber, userName);
                     break;
 
                 case "4":
-                    System.out.println("Enter File name to search for : ");
+                    System.out.println("***Enter File name to search for : ");
                     String fileName = scanner.nextLine();
                     node.initializeSearch(fileName);
                     break;
 
+                case "5":
+                    boolean error = true;
+                    while(error){
+                        System.out.println("***Enter number of random queries : ");
+                        try {
+                            int numberOfQueries = scanner.nextInt();
+                            node.randomQuerySearch(numberOfQueries);
+                            error = false;
+                        } catch(Exception ex){
+                            error = true;
+                        }
+                    }
+                    break;
+
                 case QUIT:
-                    System.out.println("Deregistering from the BS");
-                    node.deregisterFromBS(ipAddress, nodePortNumber, userName);
+                    System.out.println("Unregistering from the BS");
+                    node.unregisterFromBS(ipAddress, nodePortNumber, userName);
                     break;
 
                 default:
                     System.out.println("\nEnter valid choice");
             }
         }
+
         System.exit(0);
     }
 
@@ -198,8 +196,8 @@ public class Node {
                     .getProperty(SERVER_PORT));
             udp = Boolean.parseBoolean(properties.getProperty(UDP));
             localIp = properties.getProperty(LOCAL_IP);
-            fileName = properties.getProperty(FILENAME);
-
+            fileName = properties.getProperty(FILE_NAMES);
+            queryFile = properties.getProperty(QUERY_FILE);
 
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
@@ -211,6 +209,21 @@ public class Node {
         return properties;
     }
 
+    public void setActiveNode(boolean activeNode) {
+        isActiveNode = activeNode;
+    }
+
+    public List<RoutingTableEntry> getRoutingTable() {
+        return routingTable;
+    }
+
+    public List<String> getFileList() {
+        return fileList;
+    }
+
+    public Map<String, SearchQuery> getSentMessages() {
+        return sentMessages;
+    }
 
     public String sendMessageToBS(String msg) throws IOException {
         // TCP send and receive
@@ -232,9 +245,6 @@ public class Node {
     }
 
     public boolean registerToBootstrapServer(String ipAddress, int port, String userName) throws IOException {
-        // send REG message to the bootstrap server
-
-
         // build REG message
         String msg = createRegMessage(ipAddress, port, userName);
         System.out.println(msg);
@@ -245,9 +255,9 @@ public class Node {
         return success;
     }
 
-    public void deregisterFromBS(InetAddress bsAddress, int bsPort, String username) throws IOException {
+    public void unregisterFromBS(InetAddress bsAddress, int bsPort, String username) throws IOException {
 
-        if (this.isActiveNode){
+        if (this.isActiveNode) {
             String deregMessage = new MessageBuilder().append(Commands.UNREG)
                     .append(bsAddress.getHostAddress())
                     .append(bsPort + "")
@@ -267,7 +277,7 @@ public class Node {
                     String neighborIP = routingTableEntry.getIpAddress();
                     int neighborPort = Integer.parseInt(routingTableEntry.getPort());
 
-                    udpClient.send(neighborIP, neighborPort, leaveMessage );
+                    udpClient.send(neighborIP, neighborPort, leaveMessage);
 
                 }
             }
@@ -275,7 +285,7 @@ public class Node {
             // send the deregistration message to BS
             String serverResponse = sendMessageToBS(deregMessage);
             String[] parts = serverResponse.split("\\s+");
-            if ("0".equals(parts[parts.length-1])) {
+            if ("0".equals(parts[parts.length - 1])) {
                 this.setActiveNode(false);
             } else {
                 System.err.println("IP and port may not be in the registry or command is incorrect");
@@ -284,7 +294,6 @@ public class Node {
         } else {
             System.out.println("Node is not connected or already deregisterd");
         }
-
 
 
     }
@@ -336,7 +345,7 @@ public class Node {
                         }
                     } else {
 
-                        int randIndex[] = randomNodeIndices(noOfNodes, JOINING_NODES_COUNT);
+                        int randIndex[] = generateRandomIndices(noOfNodes, JOINING_NODES_COUNT);
 
                         for (int i = 0; i < JOINING_NODES_COUNT; i++) {
                             int index = 3 * randIndex[i];
@@ -359,7 +368,7 @@ public class Node {
 
     }
 
-    private int[] randomNodeIndices(int noOfNodes, int numberOfIndices) {
+    private int[] generateRandomIndices(int noOfNodes, int numberOfIndices) {
         int randIndex[] = new int[numberOfIndices];
         int randNumber;
         HashSet<Integer> numbers = new HashSet<Integer>();
@@ -428,13 +437,37 @@ public class Node {
 
         int fileToSelect = (((int) Math.floor(Math.random() * 3))) + 3;
 
-        int[] randomIndices = randomNodeIndices(temp.size() - 1, fileToSelect);
+        int[] randomIndices = generateRandomIndices(temp.size() - 1, fileToSelect);
 
         for (int i : randomIndices) {
             fileList.add(temp.get(i));
         }
 
-        System.out.println(fileToSelect + "files loaded");
+        System.out.println(fileToSelect + " files indexed in the node");
+    }
+
+    public void loadQueries() throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
+
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            queryList.add(line.trim());
+        }
+
+    }
+
+    public void randomQuerySearch(int numberOfRandomQueries) throws InterruptedException {
+        int randomIndices[] = generateRandomIndices(queryList.size() - 1, numberOfRandomQueries);
+
+        String query;
+        int count = 0;
+        for (int index : randomIndices) {
+            query = queryList.get(index);
+            System.out.println("\nRandom Query #" + (++count) + " : " + query);
+            this.initializeSearch(query);
+            Thread.sleep(1000);
+        }
+
     }
 
     public void printFiles() {
@@ -499,7 +532,7 @@ public class Node {
                     for (String file : filesFound) {
                         fileNames += file + " ";
                     }
-                    System.out.println("File \"" + fileNames + "\"found locally");
+                    System.out.println("File \"" + fileNames + "\" found locally");
                 }
 
                 hopsSM++;
@@ -515,10 +548,10 @@ public class Node {
                             if (udp) {
                                 udpClient.send(ipAddress, port, searchMessage);
                             } else {
-                                webServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
+                                WebServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
                             }
 
-                            System.out.println("Search message sent to " + entry.getIpAddress() + ":" + entry.getPort());
+                            System.out.println("Passing on the search query to neighbour " + entry.getIpAddress() + ":" + entry.getPort());
 
                         } catch (Exception e) {
                             System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
@@ -528,12 +561,14 @@ public class Node {
 
             } else if (hopsSM != 0) {
                 outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound, id);
+                System.out.println("Search Results found for query : "+fileNameSM);
+                System.out.println(outputMessage+"\n");
 
                 try {
                     if (udp) {
                         udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     } else {
-                        webServiceClient.sendSearchReply(ipAddressSM, Integer.parseInt(portSM), outputMessage);
+                        WebServiceClient.sendSearchReply(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     }
                 } catch (Exception e) {
                     System.err.println("Error sending SEROK message to " + ipAddressSM + ":" + portSM);

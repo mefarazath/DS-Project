@@ -56,6 +56,7 @@ public class SocketServer extends Thread {
             } else {
                 clientSocket = new DatagramSocket(this.port, ipAddress);
             }
+            clientSocket.setReuseAddress(true);
 
             byte[] receiveData = new byte[size];
 
