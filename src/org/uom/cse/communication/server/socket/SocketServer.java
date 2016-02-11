@@ -309,8 +309,9 @@ public class SocketServer extends Thread {
         Long latency = System.currentTimeMillis() - searchQuery.getSearchTime();
         String hops = messageComponents[5];
 
-        System.out.println(message);
+        System.out.println();
         System.out.println("Search successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops");
+        System.out.println(message);
 
         return true;
 
