@@ -69,6 +69,11 @@ public class SocketServer extends Thread {
             outputMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
             //     System.out.println(outputMessage+"\t<-- "+receivePacket.getAddress().getHostAddress()+":"+receivePacket.getPort());
 
+            // add network level info about the sender
+            if (outputMessage.startsWith(Commands.JOINOK)) {
+                outputMessage = outputMessage + " " + receivePacket.getAddress().getHostAddress() + " " + receivePacket.getPort();
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -214,12 +219,20 @@ public class SocketServer extends Thread {
 
     protected boolean handleJOINOK(String[] msgParts) {
         //length JOINOK value
-        if (msgParts.length != 3) {
-            return false;
-        }
+//        if (msgParts.length != 3) {
+//            return false;
+//        }
+
+        String senderIp = msgParts[4];
+        String senderPort = msgParts[5];
 
         if (msgParts[2].equals(Commands.SUCCESS_CODE)) {
             System.out.println("Joined Successfully");
+
+            for (RoutingTableEntry entry : node.getRoutingTable()) {
+                updateRoutingTable(senderIp, senderPort, true);
+            }
+
         } else if (msgParts[2].equals(Commands.ERROR_CODE)) {
             System.out.println("Join Failed");
         } else {

@@ -11,7 +11,7 @@ public class RoutingTableEntry {
         this.userName = userName;
         this.ipAddress = ipAddress;
         this.port = port;
-        this.isActive = true; // gets Active only when the JOINOK is received
+        this.isActive = false; // gets Active only when the JOINOK is received
     }
 
     public String getUserName() {
