@@ -347,7 +347,7 @@ public class Node {
                 } else {
                     RoutingTableEntry entry;
 
-                    if (noOfNodes < JOINING_NODES_COUNT) {
+                    if (noOfNodes <= JOINING_NODES_COUNT) {
                         for (int i = 1; i <= noOfNodes; i++) {
                             int index = 3 * i;
                             ip = msgParts[index];
@@ -356,6 +356,7 @@ public class Node {
 
                             // add neighbours to the routing table
                             entry = new RoutingTableEntry(username, ip, port);
+                            entry.setActive(true);
                             routingTable.add(entry);
                         }
                     } else {
@@ -370,6 +371,7 @@ public class Node {
 
                             // add neighbours to the routing table
                             entry = new RoutingTableEntry(username, ip, port);
+                            entry.setActive(true);
                             routingTable.add(entry);
                         }
                     }
