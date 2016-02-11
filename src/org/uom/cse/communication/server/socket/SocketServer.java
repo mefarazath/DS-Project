@@ -35,9 +35,7 @@ public class SocketServer extends Thread {
         while (true) {
 
             String message = receive();
-            System.out.println();
-            System.out.println("Received : " + message);
-            System.out.println();
+            System.out.println("\nReceived : " + message);
 
             handleMessage(message);
 
@@ -309,9 +307,7 @@ public class SocketServer extends Thread {
         Long latency = System.currentTimeMillis() - searchQuery.getSearchTime();
         String hops = messageComponents[5];
 
-        System.out.println();
-        System.out.println("Search successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops");
-        System.out.println(message);
+        System.out.println("\nSearch successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops\n"+message);
 
         return true;
 

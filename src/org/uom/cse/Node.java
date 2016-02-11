@@ -576,8 +576,7 @@ public class Node {
 
             } else if (hopsSM != 0) {
                 outputMessage = this.createSearchOkMessage(this.ipAddress.getHostAddress(), Integer.toString(this.port), hopsSM, filesFound, id);
-                System.out.println("Search Results found for query : "+fileNameSM);
-                System.out.println(outputMessage+"\n");
+                System.out.println("Search Results found for query : "+fileNameSM +"\n"+outputMessage+"\n");
 
                 try {
                     if (udp) {
