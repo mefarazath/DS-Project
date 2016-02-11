@@ -223,8 +223,8 @@ public class SocketServer extends Thread {
 //            return false;
 //        }
 
-        String senderIp = msgParts[4];
-        String senderPort = msgParts[5];
+        String senderIp = msgParts[3];
+        String senderPort = msgParts[4];
 
         if (msgParts[2].equals(Commands.SUCCESS_CODE)) {
             System.out.println("Joined Successfully");
