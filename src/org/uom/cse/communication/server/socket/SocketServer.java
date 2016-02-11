@@ -7,10 +7,7 @@ import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.message.MessageBuilder;
 import org.uom.cse.message.SearchQuery;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.List;
 
 public class SocketServer extends Thread {
@@ -51,12 +48,10 @@ public class SocketServer extends Thread {
         DatagramSocket clientSocket = null;
         String outputMessage = Commands.ERROR;
         try {
-            if (this.port == 0) {
-                clientSocket = new DatagramSocket();
-            } else {
-                clientSocket = new DatagramSocket(this.port, ipAddress);
-            }
+            clientSocket = new DatagramSocket(null);
             clientSocket.setReuseAddress(true);
+            clientSocket.bind(new InetSocketAddress(this.ipAddress, this.port));
+
 
             byte[] receiveData = new byte[size];
 
