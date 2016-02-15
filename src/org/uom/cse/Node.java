@@ -1,5 +1,29 @@
 package org.uom.cse;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.ConnectException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
+import java.util.Set;
+
 import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.communication.client.WebServiceClient;
 import org.uom.cse.communication.server.socket.SocketServer;
@@ -7,13 +31,6 @@ import org.uom.cse.communication.server.webservice.SearchServiceImpl;
 import org.uom.cse.communication.server.webservice.SearchServicePublisher;
 import org.uom.cse.message.MessageBuilder;
 import org.uom.cse.message.SearchQuery;
-
-import java.io.*;
-import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.*;
 
 
 public class Node {
@@ -137,6 +154,7 @@ public class Node {
             System.out.println("***3. Unregister Node");
             System.out.println("***4. Search Manually");
             System.out.println("***5. Random Query Search");
+            System.out.println("***6. Search all from file");
             System.out.println("***Please Enter your choice (Enter q to quit) : ");
 
             choice = scanner.nextLine();
@@ -177,6 +195,18 @@ public class Node {
                 case QUIT:
                     System.out.println("Unregistering from the BS");
                     node.unregisterFromBS(ipAddress, nodePortNumber, userName);
+                    break;
+                    
+                case "6":
+                    System.out.println("***Performaing search based on the queries.txt file***");
+                    
+                    BufferedReader br = new BufferedReader(new FileReader(queryFile));
+                    String fileName2;
+                    while ( (fileName2 = br.readLine()) != null ) {
+                    	System.out.println("Searching for : " + fileName2);
+                    	node.initializeSearch(fileName2);
+                    }
+                    
                     break;
 
                 default:
