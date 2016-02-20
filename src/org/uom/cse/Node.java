@@ -1,13 +1,6 @@
 package org.uom.cse;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -68,6 +61,12 @@ public class Node {
     private int port;
     private Properties properties;
 
+    private int noOfRecievedMsgs = 0;
+    private int noOfForwardedMsgs = 0;
+    private int noOfAnsweredMsgs = 0;
+
+    private String outputFileName;
+
     private Node() {
         routingTable = new ArrayList<>();
         fileList = new ArrayList<>();
@@ -76,6 +75,8 @@ public class Node {
 
     public Node(InetAddress ipAddress, int port) {
         this();
+        this.outputFileName = "OutputFiles/file_"+ipAddress.getHostAddress()+"_"+port+".txt";
+        createFileForNode();
         this.ipAddress = ipAddress;
         this.port = port;
         this.udpClient = new UDPClient(ipAddress, port);
@@ -155,6 +156,7 @@ public class Node {
             System.out.println("***4. Search Manually");
             System.out.println("***5. Random Query Search");
             System.out.println("***6. Search all from file");
+            System.out.println("***7. Show Evaluation Results");
             System.out.println("***Please Enter your choice (Enter q to quit) : ");
 
             choice = scanner.nextLine();
@@ -207,6 +209,10 @@ public class Node {
                     	node.initializeSearch(fileName2);
                     }
                     
+                    break;
+
+                case "7":
+                    node.printEvaluationResults();
                     break;
 
                 default:
@@ -540,6 +546,7 @@ public class Node {
 
         if (!messageIds.contains(id)) {
 
+
             messageIds.add(id);
 
             String ipAddressSM = searchMessageComponents[2];
@@ -572,6 +579,10 @@ public class Node {
                 }
             }
 
+            if(hopsSM != 0){
+                this.noOfRecievedMsgs +=1;
+            }
+
             if (filesFound.isEmpty() || hopsSM == 0) {
 
                 if (hopsSM == 0 && !filesFound.isEmpty()) {
@@ -593,8 +604,10 @@ public class Node {
                             int port = Integer.parseInt(entry.getPort());
 
                             if (udp) {
+                                this.noOfForwardedMsgs += 1;
                                 udpClient.send(ipAddress, port, searchMessage);
                             } else {
+                                this.noOfForwardedMsgs += 1;
                                 WebServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
                             }
 
@@ -612,8 +625,10 @@ public class Node {
 
                 try {
                     if (udp) {
+                        this.noOfAnsweredMsgs += 1;
                         udpClient.send(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     } else {
+                        this.noOfAnsweredMsgs += 1;
                         WebServiceClient.sendSearchReply(ipAddressSM, Integer.parseInt(portSM), outputMessage);
                     }
                 } catch (Exception e) {
@@ -671,5 +686,37 @@ public class Node {
         String searchMessage = this.createSearchMessage(0, fileName, this.ipAddress.getHostAddress(), Integer.toString(this.port), "");
         this.search(searchMessage);
 
+    }
+
+    public void printEvaluationResults(){
+        System.out.println("\nEvaluation Results");
+        System.out.println("No of Search Queries Received : "+this.noOfRecievedMsgs);
+        System.out.println("No of Search Queries Forwarded : "+this.noOfForwardedMsgs);
+        System.out.println("No of Search Queries Answered : "+this.noOfAnsweredMsgs);
+        System.out.println();
+    }
+
+    public void createFileForNode(){
+        try {
+            File file = new File(this.outputFileName);
+            file.createNewFile();
+
+            BufferedWriter output = new BufferedWriter(new FileWriter(file, true));
+            output.write(this.outputFileName);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void writeToFile(String outputString){
+        try {
+            File fileName = new File(this.outputFileName);
+            BufferedWriter output = new BufferedWriter(new FileWriter(fileName, true));
+
+            output.write(outputString+"\n");
+            output.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 }
