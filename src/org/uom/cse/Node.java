@@ -200,7 +200,10 @@ public class Node {
                     break;
                     
                 case "6":
-                    System.out.println("***Performaing search based on the queries.txt file***");
+                    System.out.println("***Performing search based on the queries.txt file***");
+
+                    node.resetEvaluationParameters();
+                    node.writeToFile("\n\n------------------------------------------------------------------------\n\n");
                     
                     BufferedReader br = new BufferedReader(new FileReader(queryFile));
                     String fileName2;
@@ -221,6 +224,12 @@ public class Node {
         }
 
         System.exit(0);
+    }
+
+    public void resetEvaluationParameters(){
+        this.noOfAnsweredMsgs = 0;
+        this.noOfRecievedMsgs = 0;
+        this.noOfForwardedMsgs = 0;
     }
 
     public static Properties loadProperties() {
@@ -693,6 +702,7 @@ public class Node {
         System.out.println("No of Search Queries Received : "+this.noOfRecievedMsgs);
         System.out.println("No of Search Queries Forwarded : "+this.noOfForwardedMsgs);
         System.out.println("No of Search Queries Answered : "+this.noOfAnsweredMsgs);
+        System.out.println("Routing Table : "+ this.routingTable.size());
         System.out.println();
     }
 

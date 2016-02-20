@@ -309,7 +309,7 @@ public class SocketServer extends Thread {
         String hops = messageComponents[5];
 
         System.out.println("\nSearch successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops\n"+message);
-        node.writeToFile(latency+" ms\t" + hops + " hops"+searchQuery.getSearchQuery());
+        node.writeToFile(latency+" ms\t" + hops + " hops\t"+searchQuery.getSearchQuery());
 
         return true;
 

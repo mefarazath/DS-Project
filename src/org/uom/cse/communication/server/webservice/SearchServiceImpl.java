@@ -39,7 +39,7 @@ public class SearchServiceImpl implements SearchService {
         System.out.println(queryReply);
         System.out.println("Search successful for query : \"" + searchQuery.getSearchQuery() + "\" in " + latency + " ms and in " + hops + " hops");
         System.out.println();
-        node.writeToFile(latency+" ms\t" + hops + " hops"+searchQuery.getSearchQuery());
+        node.writeToFile(latency+" ms\t" + hops + " hops\t"+searchQuery.getSearchQuery());
     }
 
 }
