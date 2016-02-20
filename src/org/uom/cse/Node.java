@@ -7,15 +7,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Scanner;
-import java.util.Set;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.uom.cse.communication.client.UDPClient;
 import org.uom.cse.communication.client.WebServiceClient;
@@ -157,6 +151,7 @@ public class Node {
             System.out.println("***5. Random Query Search");
             System.out.println("***6. Search all from file");
             System.out.println("***7. Show Evaluation Results");
+            System.out.println("***8. Reset Parameters");
             System.out.println("***Please Enter your choice (Enter q to quit) : ");
 
             choice = scanner.nextLine();
@@ -202,7 +197,6 @@ public class Node {
                 case "6":
                     System.out.println("***Performing search based on the queries.txt file***");
 
-                    node.resetEvaluationParameters();
                     node.writeToFile("\n\n------------------------------------------------------------------------\n\n");
                     
                     BufferedReader br = new BufferedReader(new FileReader(queryFile));
@@ -216,6 +210,10 @@ public class Node {
 
                 case "7":
                     node.printEvaluationResults();
+                    break;
+
+                case "8":
+                    node.resetEvaluationParameters();
                     break;
 
                 default:
@@ -711,7 +709,7 @@ public class Node {
             File file = new File(this.outputFileName);
             file.createNewFile();
 
-            BufferedWriter output = new BufferedWriter(new FileWriter(file, true));
+            BufferedWriter output = new BufferedWriter(new FileWriter(file, false));
             output.write(this.outputFileName);
         }catch(Exception e){
             e.printStackTrace();
