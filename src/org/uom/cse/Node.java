@@ -697,11 +697,7 @@ public class Node {
 
     public void printEvaluationResults(){
         System.out.println("\nEvaluation Results");
-        System.out.println("No of Search Queries Received : "+this.noOfRecievedMsgs);
-        System.out.println("No of Search Queries Forwarded : "+this.noOfForwardedMsgs);
-        System.out.println("No of Search Queries Answered : "+this.noOfAnsweredMsgs);
-        System.out.println("Routing Table : "+ this.routingTable.size());
-        System.out.println();
+        System.out.println(this.noOfRecievedMsgs+"\t"+this.noOfForwardedMsgs+"\t"+this.noOfAnsweredMsgs+"\t"+this.routingTable.size());
     }
 
     public void createFileForNode(){
