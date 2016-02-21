@@ -606,22 +606,24 @@ public class Node {
                 // iterate through the routing list and send UDP SER message
                 for (RoutingTableEntry entry : routingTable) {
                     if (!(entry.getIpAddress().equals(ipAddressSM) && entry.getPort().equals(portSM))) {
-                        try {
-                            String ipAddress = entry.getIpAddress();
-                            int port = Integer.parseInt(entry.getPort());
+                        if(entry.isActive()) {
+                            try {
+                                String ipAddress = entry.getIpAddress();
+                                int port = Integer.parseInt(entry.getPort());
 
-                            if (udp) {
-                                this.noOfForwardedMsgs += 1;
-                                udpClient.send(ipAddress, port, searchMessage);
-                            } else {
-                                this.noOfForwardedMsgs += 1;
-                                WebServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
+                                if (udp) {
+                                    this.noOfForwardedMsgs += 1;
+                                    udpClient.send(ipAddress, port, searchMessage);
+                                } else {
+                                    this.noOfForwardedMsgs += 1;
+                                    WebServiceClient.sendSearchQuery(ipAddress, port, searchMessage);
+                                }
+
+                                System.out.println("Passing on the search query to neighbour " + entry.getIpAddress() + ":" + entry.getPort());
+
+                            } catch (Exception e) {
+                                System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
                             }
-
-                            System.out.println("Passing on the search query to neighbour " + entry.getIpAddress() + ":" + entry.getPort());
-
-                        } catch (Exception e) {
-                            System.err.println("Error sending SER message to " + entry.getIpAddress() + ":" + entry.getPort());
                         }
                     }
                 }
